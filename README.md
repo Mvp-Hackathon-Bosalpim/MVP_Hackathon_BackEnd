@@ -9,16 +9,16 @@
 
 > ⚠️ 아래 명령어는 반드시 `.git` 폴더가 있는 프로젝트 루트 경로에서, **Git Bash**로 실행해야 합니다.
 
-\`\`\`bash
+````bash
 git config core.hooksPath .githooks
 chmod +x .githooks/commit-msg
-\`\`\`
+````
 
 ### 커밋 메시지 형식
 
-\`\`\`
+```
 <type>(<scope>): <subject>
-\`\`\`
+```
 
 ### 허용 타입
 
@@ -44,8 +44,8 @@ chmod +x .githooks/commit-msg
 
 ### 예시
 
-\`\`\`
+```
 feat: 로그인 기능 추가
 fix(auth): 토큰 만료 버그 수정
 refactor(user): 회원가입 로직 분리
-\`\`\`
+```
