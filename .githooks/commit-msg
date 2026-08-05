@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+commit_msg_file=$1
+commit_subject=$(head -n 1 "$commit_msg_file")
+
+# 허용 타입
+pattern='^(feat|fix|docs|style|refactor|test|chore|perf|build|ci|revert)(\(.+\))?: .{1,50}'
+
+if ! echo "$commit_subject" | grep -E "$pattern" > /dev/null; then
+    echo ""
+    echo "❌ 커밋 메시지 형식이 올바르지 않습니다."
+    echo ""
+    echo "📌 형식: <type>(<scope>): <subject>"
+    echo ""
+    echo "📌 허용 타입"
+    echo "  feat     : 새로운 기능 추가"
+    echo "  fix      : 버그 수정"
+    echo "  docs     : 문서 수정"
+    echo "  style    : 코드 포맷팅, 세미콜론 누락 등 (로직 변경 없음)"
+    echo "  refactor : 코드 리팩토링"
+    echo "  test     : 테스트 코드 추가/수정"
+    echo "  chore    : 빌드, 설정 파일 수정"
+    echo "  perf     : 성능 개선"
+    echo "  build    : 빌드 시스템, 외부 종속성 변경"
+    echo "  ci       : CI 설정 변경"
+    echo "  revert   : 커밋 되돌리기"
+    echo ""
+    echo "📌 예시"
+    echo "  feat: 로그인 기능 추가"
+    echo "  fix(auth): 토큰 만료 버그 수정"
+    echo "  refactor(user): 회원가입 로직 분리"
+    echo ""
+    echo "📌 규칙"
+    echo "  - subject는 50자 이내"
+    echo "  - 마침표 금지"
+    echo "  - 한글 또는 영어 모두 가능"
+    echo ""
+    exit 1
+fi
+
+# 마침표 금지
+if echo "$commit_subject" | grep -E '\.$' > /dev/null; then
+    echo ""
+    echo "❌ subject 끝에 마침표(.)를 사용할 수 없습니다."
+    echo ""
+    exit 1
+fi
+
+echo ""
+echo "✅ 커밋 메시지 검증 통과!"
+echo ""
+exit 0
