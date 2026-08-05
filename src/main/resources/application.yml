@@ -22,3 +22,15 @@ logging:
     org.hibernate.SQL: debug
     org.springframework.security: debug
     org.springframework.security.oauth2: trace
+
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    tags-sorter: alpha
+  api-docs:
+    path: /api-docs
+
+  default-consumes-media-type: application/json;charset=UTF-8
+  default-produces-media-type: application/json;charset=UTF-8
