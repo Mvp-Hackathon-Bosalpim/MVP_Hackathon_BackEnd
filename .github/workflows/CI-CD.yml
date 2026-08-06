@@ -1,7 +1,7 @@
 name: CI-CD.yml
 on:
   push:
-    branches: [ "test2222" ]
+    branches: [ "test" ]
 jobs:
   build:
     runs-on: ubuntu-latest
