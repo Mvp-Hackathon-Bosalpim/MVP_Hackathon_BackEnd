@@ -91,8 +91,9 @@ public class Item {
         }
     }
 
-    public static Item CreateManualItem(CreateManualItemDocumentReqDto reqDto) {
+    public static Item CreateManualItem(CreateManualItemDocumentReqDto reqDto, File file) {
         return Item.builder()
+                .file(file)
                 .sourceType(SourceType.MANUAL)
                 .supplierName(reqDto.getSupplierName())
                 .rawItemName(reqDto.getRawItemName())

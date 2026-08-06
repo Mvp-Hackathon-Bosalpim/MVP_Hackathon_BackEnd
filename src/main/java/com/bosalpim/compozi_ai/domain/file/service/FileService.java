@@ -22,10 +22,10 @@ public class FileService {
                 .map(req -> File.createFile(null, InputMethod.MANUAL))
                 .toList();
 
-        itemService.createItem(reqDto);
-        fileRepository.saveAll(files);
+        List<File> savedFiles = fileRepository.saveAll(files);
+        itemService.createManualItem(reqDto, savedFiles);
 
-        return CreateManualItemDocumentResDto.from(files);
+        return CreateManualItemDocumentResDto.from(savedFiles);
 
     }
 }
