@@ -7,16 +7,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 📢 깃허브 checkout!!
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: 📢 GitHubAction JDK 17 설치
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
       - name: 📢 Gradle 실행 권한 부여
         run: chmod +x gradlew
       - name: 📢 Gradle 캐싱
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
