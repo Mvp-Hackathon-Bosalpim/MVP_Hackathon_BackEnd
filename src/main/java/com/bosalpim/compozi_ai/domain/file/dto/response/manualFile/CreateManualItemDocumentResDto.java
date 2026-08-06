@@ -1,4 +1,4 @@
-package com.bosalpim.compozi_ai.domain.item.dto.response.manual;
+package com.bosalpim.compozi_ai.domain.file.dto.response.manualFile;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;

@@ -1,6 +1,6 @@
-package com.bosalpim.compozi_ai.domain.item.entity;
+package com.bosalpim.compozi_ai.domain.file.entity;
 
-import com.bosalpim.compozi_ai.domain.item.enums.InputMethod;
+import com.bosalpim.compozi_ai.domain.file.enums.InputMethod;
 import com.bosalpim.compozi_ai.general.entity.BaseTimeStampEntity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

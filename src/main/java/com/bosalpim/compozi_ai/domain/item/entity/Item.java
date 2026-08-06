@@ -1,5 +1,6 @@
 package com.bosalpim.compozi_ai.domain.item.entity;
 
+import com.bosalpim.compozi_ai.domain.file.entity.File;
 import com.bosalpim.compozi_ai.domain.inbox.entity.DuplicatedGroup;
 import com.bosalpim.compozi_ai.domain.item.enums.ReviewStatus;
 import com.bosalpim.compozi_ai.domain.item.enums.SourceType;
@@ -17,10 +18,16 @@ import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
+@Getter
+@Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PACKAGE)
 @Table(name = "items")
 public class Item {
 
@@ -47,9 +54,9 @@ public class Item {
 
     private String unit;
 
-    private Integer priceBefore;
+    private Long priceBefore;
 
-    private Integer priceAfter;
+    private Long priceAfter;
 
     private LocalDate effectiveDate;
 
@@ -61,7 +68,7 @@ public class Item {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "document_id")
-    private Document document;
+    private File file;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "duplicated_group_id")
