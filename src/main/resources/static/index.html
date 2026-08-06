@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MVP Backend</title>
+
+    <style>
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+
+            font-family: Segoe UI, Tahoma, Geneva, Verdana, sans-serif;
+
+            color: #fff;
+
+            height: 100vh;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            background: linear-gradient(-45deg, #090b12, #111827, #172554, #0f172a);
+
+            background-size: 400% 400%;
+
+            animation: bgMove 18s ease infinite;
+
+            overflow: hidden;
+
+        }
+
+        @keyframes bgMove {
+
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+
+        }
+
+        .card {
+
+            width: 760px;
+
+            max-width: 90%;
+
+            padding: 50px;
+
+            border-radius: 24px;
+
+            background: rgba(255, 255, 255, .05);
+
+            backdrop-filter: blur(15px);
+
+            border: 1px solid rgba(255, 255, 255, .08);
+
+            box-shadow: 0 30px 80px rgba(0, 0, 0, .45);
+
+            animation: fadeUp .8s ease;
+
+            transition: .35s;
+
+        }
+
+        .card:hover {
+
+            transform: translateY(-4px) scale(1.02);
+
+        }
+
+        @keyframes fadeUp {
+
+            from {
+
+                opacity: 0;
+
+                transform: translateY(30px);
+
+            }
+
+            to {
+
+                opacity: 1;
+
+                transform: translateY(0);
+
+            }
+
+        }
+
+        .badge {
+
+            display: inline-block;
+
+            background: #2563eb;
+
+            padding: 8px 16px;
+
+            border-radius: 50px;
+
+            font-size: 13px;
+
+            letter-spacing: 1px;
+
+            margin-bottom: 25px;
+
+        }
+
+        h1 {
+
+            font-size: 64px;
+
+            font-weight: 700;
+
+            margin-bottom: 8px;
+
+            animation: fadeIn 1s;
+
+        }
+
+        .subtitle {
+
+            color: #9ca3af;
+
+            font-size: 18px;
+
+            margin-bottom: 35px;
+
+            animation: fadeIn 1.2s;
+
+        }
+
+        .status {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 14px;
+
+            margin-bottom: 35px;
+
+            font-size: 22px;
+
+            font-weight: 600;
+
+        }
+
+        .dot {
+
+            width: 14px;
+
+            height: 14px;
+
+            border-radius: 50%;
+
+            background: #22c55e;
+
+            animation: pulse 1.5s infinite;
+
+        }
+
+        @keyframes pulse {
+
+            0% {
+
+                box-shadow: 0 0 0 0 rgba(34, 197, 94, .8);
+
+            }
+
+            100% {
+
+                box-shadow: 0 0 0 16px rgba(34, 197, 94, 0);
+
+            }
+
+        }
+
+        .info {
+
+            display: grid;
+
+            grid-template-columns:180px 1fr;
+
+            row-gap: 18px;
+
+            margin-bottom: 35px;
+
+        }
+
+        .label {
+
+            color: #9ca3af;
+
+        }
+
+        .value {
+
+            color: white;
+
+            font-weight: 500;
+
+        }
+
+        .footer {
+
+            border-top: 1px solid rgba(255, 255, 255, .08);
+
+            padding-top: 24px;
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            color: #6b7280;
+
+            font-family: Consolas, monospace;
+
+        }
+
+        .footer span {
+
+            color: #60a5fa;
+
+        }
+
+        .clock {
+
+            color: #d1d5db;
+
+            font-size: 15px;
+
+        }
+
+        @keyframes fadeIn {
+
+            from {
+
+                opacity: 0;
+
+            }
+
+            to {
+
+                opacity: 1;
+
+            }
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="card">
+
+    <div class="badge">
+        BACKEND API
+    </div>
+
+    <h1>MVP</h1>
+
+    <div class="subtitle">
+        Purchase Verification Backend Server
+    </div>
+
+    <div class="status">
+
+        <div class="dot"></div>
+
+        <div>Server Running</div>
+
+    </div>
+
+    <div class="info">
+
+        <div class="label">Framework</div>
+        <div class="value">Spring Boot</div>
+
+        <div class="label">Language</div>
+        <div class="value">Java 17</div>
+
+        <div class="label">Architecture</div>
+        <div class="value">REST API</div>
+
+        <div class="label">Environment</div>
+        <div class="value">Production</div>
+
+        <div class="label">Health Status</div>
+        <div class="value">All Systems Operational</div>
+
+    </div>
+
+    <div class="footer">
+
+        <div>
+            <span>//</span> team.build();
+        </div>
+
+        <div class="clock" id="clock"></div>
+
+    </div>
+
+</div>
+
+<script>
+
+    function updateClock() {
+
+        const now = new Date();
+
+        document.getElementById("clock").textContent =
+            now.toLocaleString();
+
+    }
+
+    updateClock();
+
+    setInterval(updateClock, 1000);
+
+</script>
+
+</body>
+</html>
