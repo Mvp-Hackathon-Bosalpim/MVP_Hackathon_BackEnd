@@ -70,7 +70,7 @@ public class Item {
     private LocalDateTime deletedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "document_id")
+    @JoinColumn(name = "file_id")
     private File file;
 
     @ManyToOne(fetch = FetchType.LAZY)
