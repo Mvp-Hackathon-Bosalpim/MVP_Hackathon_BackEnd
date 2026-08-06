@@ -1,4 +1,4 @@
-package com.bosalpim.compozi_ai.domain.file.dto.response.manualFile;
+package com.bosalpim.compozi_ai.domain.file.dto.response;
 
 import com.bosalpim.compozi_ai.domain.file.entity.File;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -8,7 +8,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class CreateManualItemDocumentResDto {
+public class CreateItemDocumentResDto {
 
 
     private final Integer total;
@@ -18,13 +18,13 @@ public class CreateManualItemDocumentResDto {
     private final Integer needCheck;
 
 
-    public static CreateManualItemDocumentResDto from(List<File> savedFiles) {
-        return CreateManualItemDocumentResDto.builder()
+    public static CreateItemDocumentResDto from(List<File> savedFiles) {
+        return CreateItemDocumentResDto.builder()
                 .total(savedFiles.size())
                 .normal(1)
                 .needCheck(savedFiles.size() - 1)
                 .build();
-        // TODO : 추후 데이터 유효성 검사 로직 구현 시 수정!
+        // TODO : 추후 데이터 유효성 검사 로직 구현 시 수정! (일단 하드코딩)
 
     }
 }

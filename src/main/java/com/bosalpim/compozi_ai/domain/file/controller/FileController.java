@@ -1,7 +1,7 @@
 package com.bosalpim.compozi_ai.domain.file.controller;
 
 import com.bosalpim.compozi_ai.domain.file.dto.request.manualFile.CreateManualItemDocumentListReqDto;
-import com.bosalpim.compozi_ai.domain.file.dto.response.manualFile.CreateManualItemDocumentResDto;
+import com.bosalpim.compozi_ai.domain.file.dto.response.CreateItemDocumentResDto;
 import com.bosalpim.compozi_ai.domain.file.service.FileService;
 import com.bosalpim.compozi_ai.general.response.ApiSuccess;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,7 @@ public class FileController {
 
     @ApiSuccess(statusCode = HttpStatus.CREATED, message = "수기 입력이 완료 되었습니다.")
     @PostMapping("/manual-document")
-    public CreateManualItemDocumentResDto createManualFile(@RequestBody CreateManualItemDocumentListReqDto reqDto) {
+    public CreateItemDocumentResDto createManualFile(@RequestBody CreateManualItemDocumentListReqDto reqDto) {
         return fileService.createManualFile(reqDto);
     }
 }
