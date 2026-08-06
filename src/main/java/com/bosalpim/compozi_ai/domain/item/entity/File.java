@@ -14,8 +14,8 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "documents")
-public class Document extends BaseTimeStampEntity {
+@Table(name = "files")
+public class File extends BaseTimeStampEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
