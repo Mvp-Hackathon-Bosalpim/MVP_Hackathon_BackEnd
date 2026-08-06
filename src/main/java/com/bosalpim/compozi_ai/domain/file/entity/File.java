@@ -10,9 +10,12 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
+@Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "files")
 public class File extends BaseTimeStampEntity {
@@ -26,5 +29,16 @@ public class File extends BaseTimeStampEntity {
     @Enumerated(value = EnumType.STRING)
     private InputMethod inputMethod;
 
+    @Builder
+    public File(String fileName, InputMethod inputMethod) {
+        this.fileName = fileName;
+        this.inputMethod = inputMethod;
+    }
 
+    public static File createFile(String fileName, InputMethod inputMethod) {
+        return File.builder()
+                .fileName(fileName)
+                .inputMethod(inputMethod)
+                .build();
+    }
 }

@@ -1,5 +1,6 @@
 package com.bosalpim.compozi_ai.domain.item.entity;
 
+import com.bosalpim.compozi_ai.domain.file.dto.request.manualFile.CreateManualItemDocumentReqDto;
 import com.bosalpim.compozi_ai.domain.file.entity.File;
 import com.bosalpim.compozi_ai.domain.inbox.entity.DuplicatedGroup;
 import com.bosalpim.compozi_ai.domain.item.enums.ReviewStatus;
@@ -14,6 +15,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PostPersist;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -73,6 +76,34 @@ public class Item {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "duplicated_group_id")
     private DuplicatedGroup duplicatedGroup;
+
+    @PrePersist
+    private void prePersist() {
+        if (this.docId == null) {
+            this.docId = "TEMP";
+        }
+    }
+
+    @PostPersist
+    private void generateDocId() {
+        if (this.docId.equals("TEMP") && this.sourceType == SourceType.MANUAL) {
+            this.docId = String.format("M-%03d", this.id);
+        }
+    }
+
+    public static Item CreateManualItem(CreateManualItemDocumentReqDto reqDto) {
+        return Item.builder()
+                .sourceType(SourceType.MANUAL)
+                .supplierName(reqDto.getSupplierName())
+                .rawItemName(reqDto.getRawItemName())
+                .spec(reqDto.getSpec())
+                .unit(reqDto.getUnit())
+                .priceBefore(reqDto.getPriceBefore())
+                .priceAfter(reqDto.getPriceAfter())
+                .effectiveDate(reqDto.getEffectiveDate())
+                .reviewStatus(ReviewStatus.NEW)
+                .build();
+    }
 
 
 }
