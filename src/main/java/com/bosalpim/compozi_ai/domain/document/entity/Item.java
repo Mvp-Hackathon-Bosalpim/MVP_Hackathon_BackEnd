@@ -1,5 +1,6 @@
 package com.bosalpim.compozi_ai.domain.document.entity;
 
+import com.bosalpim.compozi_ai.domain.document.dto.request.commonFile.CreateCommonItemDocumentReqDto;
 import com.bosalpim.compozi_ai.domain.document.dto.request.manualFile.CreateManualItemDocumentReqDto;
 import com.bosalpim.compozi_ai.domain.document.enums.ReviewStatus;
 import com.bosalpim.compozi_ai.domain.document.enums.SourceType;
@@ -40,7 +41,7 @@ public class Item {
     @Column(nullable = false)
     private String docId;
 
-    private String rowNo; // manual 의 경우 null 가능
+    private Long rowNo; // manual 의 경우 null 가능
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -85,9 +86,27 @@ public class Item {
 
     @PostPersist
     private void generateDocId() {
-        if (this.docId.equals("TEMP") && this.sourceType == SourceType.MANUAL) {
+        if (this.docId.equals("TEMP")) {
             this.docId = String.format("M-%03d", this.id);
         }
+    }
+
+    public static Item CreateCommonItem(CreateCommonItemDocumentReqDto reqDto, File file) {
+        return Item.builder()
+                .file(file)
+                .docId(reqDto.getDocId())
+                .sourceType(SourceType.from(reqDto.getSourceType()))
+                .rowNo(reqDto.getRowNo())
+                .supplierName(reqDto.getSupplierName())
+                .rawItemName(reqDto.getRawItemName())
+                .spec(reqDto.getSpec())
+                .unit(reqDto.getUnit())
+                .priceBefore(reqDto.getPriceBefore())
+                .priceAfter(reqDto.getPriceAfter())
+                .effectiveDate(reqDto.getEffectiveDate())
+                .reviewStatus(ReviewStatus.NEW)
+                .build();
+
     }
 
     public static Item CreateManualItem(CreateManualItemDocumentReqDto reqDto, File file) {

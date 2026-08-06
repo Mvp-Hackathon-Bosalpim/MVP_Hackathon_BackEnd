@@ -1,5 +1,6 @@
 package com.bosalpim.compozi_ai.domain.document.service;
 
+import com.bosalpim.compozi_ai.domain.document.dto.request.commonFile.CreateCommonItemDocumentReqDto;
 import com.bosalpim.compozi_ai.domain.document.dto.request.manualFile.CreateManualItemDocumentListReqDto;
 import com.bosalpim.compozi_ai.domain.document.dto.request.manualFile.CreateManualItemDocumentReqDto;
 import com.bosalpim.compozi_ai.domain.document.entity.File;
@@ -16,7 +17,17 @@ public class ItemService {
 
     private final ItemRepository itemRepository;
 
-    public void createManualItem(CreateManualItemDocumentListReqDto reqDto, List<File> savedFiles) {
+    public List<Item> createCommonItem(List<CreateCommonItemDocumentReqDto> reqDto, File savedFile) {
+        List<Item> items = new ArrayList<>();
+
+        for (CreateCommonItemDocumentReqDto createCommonItemDocumentReqDto : reqDto) {
+            items.add(Item.CreateCommonItem(createCommonItemDocumentReqDto, savedFile));
+        }
+
+        return itemRepository.saveAll(items);
+    }
+
+    public List<Item> createManualItem(CreateManualItemDocumentListReqDto reqDto, List<File> savedFiles) {
         List<CreateManualItemDocumentReqDto> itemDtos = reqDto.getItems();
         List<Item> items = new ArrayList<>();
 
@@ -26,6 +37,6 @@ public class ItemService {
             items.add(Item.CreateManualItem(itemDto, file));
         }
 
-        itemRepository.saveAll(items);
+        return itemRepository.saveAll(items);
     }
 }
