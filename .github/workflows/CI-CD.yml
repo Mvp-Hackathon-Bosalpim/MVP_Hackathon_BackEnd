@@ -1,9 +1,11 @@
 name: CI-CD.yml
 on:
-  push:
-    branches: [ "test" ]
+  pull_request:
+    types: [ closed ]
+    branches: [ "develop" ]
 jobs:
   build:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
       - name: 📢 깃허브 checkout!!
@@ -44,7 +46,6 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: build
-    if: github.event_name == 'push'
     steps:
       - name: 📢SSH로 EC2에 접속해보자
         uses: appleboy/ssh-action@master
