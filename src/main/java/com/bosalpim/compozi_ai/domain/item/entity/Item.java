@@ -1,8 +1,8 @@
-package com.bosalpim.compozi_ai.domain.itemDoc.entity;
+package com.bosalpim.compozi_ai.domain.item.entity;
 
 import com.bosalpim.compozi_ai.domain.inbox.entity.DuplicatedGroup;
-import com.bosalpim.compozi_ai.domain.itemDoc.enums.ReviewStatus;
-import com.bosalpim.compozi_ai.domain.itemDoc.enums.SourceType;
+import com.bosalpim.compozi_ai.domain.item.enums.ReviewStatus;
+import com.bosalpim.compozi_ai.domain.item.enums.SourceType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

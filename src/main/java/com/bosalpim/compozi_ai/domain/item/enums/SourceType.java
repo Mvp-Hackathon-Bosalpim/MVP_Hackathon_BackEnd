@@ -1,4 +1,4 @@
-package com.bosalpim.compozi_ai.domain.itemDoc.enums;
+package com.bosalpim.compozi_ai.domain.item.enums;
 
 public enum SourceType {
     PDF,
