@@ -1,11 +1,10 @@
-package com.bosalpim.compozi_ai.domain.file.service;
+package com.bosalpim.compozi_ai.domain.document.service;
 
-import com.bosalpim.compozi_ai.domain.file.dto.request.manualFile.CreateManualItemDocumentListReqDto;
-import com.bosalpim.compozi_ai.domain.file.dto.response.CreateItemDocumentResDto;
-import com.bosalpim.compozi_ai.domain.file.entity.File;
-import com.bosalpim.compozi_ai.domain.file.enums.InputMethod;
-import com.bosalpim.compozi_ai.domain.file.repository.FileRepository;
-import com.bosalpim.compozi_ai.domain.item.service.ItemService;
+import com.bosalpim.compozi_ai.domain.document.dto.request.manualFile.CreateManualItemDocumentListReqDto;
+import com.bosalpim.compozi_ai.domain.document.dto.response.CreateItemDocumentResDto;
+import com.bosalpim.compozi_ai.domain.document.entity.File;
+import com.bosalpim.compozi_ai.domain.document.enums.InputMethod;
+import com.bosalpim.compozi_ai.domain.document.repository.FileRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

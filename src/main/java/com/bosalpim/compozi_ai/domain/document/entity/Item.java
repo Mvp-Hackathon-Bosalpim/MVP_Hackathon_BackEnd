@@ -1,10 +1,9 @@
-package com.bosalpim.compozi_ai.domain.item.entity;
+package com.bosalpim.compozi_ai.domain.document.entity;
 
-import com.bosalpim.compozi_ai.domain.file.dto.request.manualFile.CreateManualItemDocumentReqDto;
-import com.bosalpim.compozi_ai.domain.file.entity.File;
+import com.bosalpim.compozi_ai.domain.document.dto.request.manualFile.CreateManualItemDocumentReqDto;
+import com.bosalpim.compozi_ai.domain.document.enums.ReviewStatus;
+import com.bosalpim.compozi_ai.domain.document.enums.SourceType;
 import com.bosalpim.compozi_ai.domain.inbox.entity.DuplicatedGroup;
-import com.bosalpim.compozi_ai.domain.item.enums.ReviewStatus;
-import com.bosalpim.compozi_ai.domain.item.enums.SourceType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

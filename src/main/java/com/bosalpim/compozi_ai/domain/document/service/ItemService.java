@@ -1,10 +1,10 @@
-package com.bosalpim.compozi_ai.domain.item.service;
+package com.bosalpim.compozi_ai.domain.document.service;
 
-import com.bosalpim.compozi_ai.domain.file.dto.request.manualFile.CreateManualItemDocumentListReqDto;
-import com.bosalpim.compozi_ai.domain.file.dto.request.manualFile.CreateManualItemDocumentReqDto;
-import com.bosalpim.compozi_ai.domain.file.entity.File;
-import com.bosalpim.compozi_ai.domain.item.entity.Item;
-import com.bosalpim.compozi_ai.domain.item.repository.ItemRepository;
+import com.bosalpim.compozi_ai.domain.document.dto.request.manualFile.CreateManualItemDocumentListReqDto;
+import com.bosalpim.compozi_ai.domain.document.dto.request.manualFile.CreateManualItemDocumentReqDto;
+import com.bosalpim.compozi_ai.domain.document.entity.File;
+import com.bosalpim.compozi_ai.domain.document.entity.Item;
+import com.bosalpim.compozi_ai.domain.document.repository.ItemRepository;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

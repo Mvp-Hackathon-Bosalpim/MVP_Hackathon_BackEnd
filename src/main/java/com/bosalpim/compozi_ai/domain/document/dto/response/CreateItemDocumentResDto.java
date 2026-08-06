@@ -1,6 +1,6 @@
-package com.bosalpim.compozi_ai.domain.file.dto.response;
+package com.bosalpim.compozi_ai.domain.document.dto.response;
 
-import com.bosalpim.compozi_ai.domain.file.entity.File;
+import com.bosalpim.compozi_ai.domain.document.entity.File;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import lombok.Builder;

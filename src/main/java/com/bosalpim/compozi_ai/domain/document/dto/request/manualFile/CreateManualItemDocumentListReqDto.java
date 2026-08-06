@@ -1,4 +1,4 @@
-package com.bosalpim.compozi_ai.domain.file.dto.request.manualFile;
+package com.bosalpim.compozi_ai.domain.document.dto.request.manualFile;
 
 import java.util.List;
 import lombok.Getter;

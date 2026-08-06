@@ -1,8 +1,8 @@
-package com.bosalpim.compozi_ai.domain.file.controller;
+package com.bosalpim.compozi_ai.domain.document.controller;
 
-import com.bosalpim.compozi_ai.domain.file.dto.request.manualFile.CreateManualItemDocumentListReqDto;
-import com.bosalpim.compozi_ai.domain.file.dto.response.CreateItemDocumentResDto;
-import com.bosalpim.compozi_ai.domain.file.service.FileService;
+import com.bosalpim.compozi_ai.domain.document.dto.request.manualFile.CreateManualItemDocumentListReqDto;
+import com.bosalpim.compozi_ai.domain.document.dto.response.CreateItemDocumentResDto;
+import com.bosalpim.compozi_ai.domain.document.service.FileService;
 import com.bosalpim.compozi_ai.general.response.ApiSuccess;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
