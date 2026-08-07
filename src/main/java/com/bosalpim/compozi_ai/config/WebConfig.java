@@ -10,7 +10,10 @@ public class WebConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**") // OpenAPI 명세 경로 CORS 허용
                 .allowedOrigins(
-                        "http://bosalpim.cloud/swagger-ui/index.html") // 배포된 Swagger UI URL
+                        "https://mvp-hackathon-front-end.vercel.app",
+                        "http://bosalpim.cloud",
+                        "http://localhost:8080",
+                        "http://localhost:3000")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*");
     }
