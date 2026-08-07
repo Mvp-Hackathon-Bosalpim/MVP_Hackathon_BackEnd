@@ -1,9 +1,9 @@
 package com.bosalpim.compozi_ai.domain.document.controller;
 
+import com.bosalpim.compozi_ai.domain.document.component.validator.FileValidator;
 import com.bosalpim.compozi_ai.domain.document.dto.request.manualFile.CreateManualItemDocumentListReqDto;
 import com.bosalpim.compozi_ai.domain.document.dto.response.CreateItemDocumentResDto;
 import com.bosalpim.compozi_ai.domain.document.service.FileService;
-import com.bosalpim.compozi_ai.domain.document.util.FileValidator;
 import com.bosalpim.compozi_ai.general.response.ApiSuccess;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
