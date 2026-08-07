@@ -110,12 +110,13 @@ public class Item {
 
     }
 
-    public static Item CreateManualItem(CreateManualItemDocumentReqDto reqDto, File file) {
+    public static Item CreateManualItem(CreateManualItemDocumentReqDto reqDto, File file, String normalizedItemName) {
         return Item.builder()
                 .file(file)
                 .sourceType(SourceType.MANUAL)
                 .supplierName(reqDto.getSupplierName())
                 .rawItemName(reqDto.getRawItemName())
+                .normalizedItemName(normalizedItemName)
                 .spec(reqDto.getSpec())
                 .unit(reqDto.getUnit())
                 .priceBefore(reqDto.getPriceBefore())

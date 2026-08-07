@@ -37,7 +37,8 @@ public class ItemService {
         for (int i = 0; i < itemDtos.size(); i++) {
             File file = savedFiles.get(i);
             CreateManualItemDocumentReqDto itemDto = itemDtos.get(i);
-            items.add(Item.CreateManualItem(itemDto, file));
+            String normalizedName = itemNameMapper.map(itemDto.getRawItemName());
+            items.add(Item.CreateManualItem(itemDto, file, normalizedName));
         }
 
         return itemRepository.saveAll(items);
