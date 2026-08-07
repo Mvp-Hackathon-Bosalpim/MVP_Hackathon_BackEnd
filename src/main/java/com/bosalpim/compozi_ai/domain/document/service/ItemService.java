@@ -1,5 +1,6 @@
 package com.bosalpim.compozi_ai.domain.document.service;
 
+import com.bosalpim.compozi_ai.domain.document.component.mapper.ItemNameMapper;
 import com.bosalpim.compozi_ai.domain.document.dto.request.commonFile.CreateCommonItemDocumentReqDto;
 import com.bosalpim.compozi_ai.domain.document.dto.request.manualFile.CreateManualItemDocumentListReqDto;
 import com.bosalpim.compozi_ai.domain.document.dto.request.manualFile.CreateManualItemDocumentReqDto;
@@ -16,12 +17,14 @@ import org.springframework.stereotype.Service;
 public class ItemService {
 
     private final ItemRepository itemRepository;
+    private final ItemNameMapper itemNameMapper;
 
     public List<Item> createCommonItem(List<CreateCommonItemDocumentReqDto> reqDto, File savedFile) {
         List<Item> items = new ArrayList<>();
 
         for (CreateCommonItemDocumentReqDto createCommonItemDocumentReqDto : reqDto) {
-            items.add(Item.CreateCommonItem(createCommonItemDocumentReqDto, savedFile));
+            String normalizedName = itemNameMapper.map(createCommonItemDocumentReqDto.getRawItemName());
+            items.add(Item.CreateCommonItem(createCommonItemDocumentReqDto, savedFile, normalizedName));
         }
 
         return itemRepository.saveAll(items);

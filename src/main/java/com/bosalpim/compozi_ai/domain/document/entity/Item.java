@@ -91,7 +91,7 @@ public class Item {
         }
     }
 
-    public static Item CreateCommonItem(CreateCommonItemDocumentReqDto reqDto, File file) {
+    public static Item CreateCommonItem(CreateCommonItemDocumentReqDto reqDto, File file, String normalizedItemName) {
         return Item.builder()
                 .file(file)
                 .docId(reqDto.getDocId())
@@ -99,6 +99,7 @@ public class Item {
                 .rowNo(reqDto.getRowNo())
                 .supplierName(reqDto.getSupplierName())
                 .rawItemName(reqDto.getRawItemName())
+                .normalizedItemName(normalizedItemName)
                 .spec(reqDto.getSpec())
                 .unit(reqDto.getUnit())
                 .priceBefore(reqDto.getPriceBefore())
