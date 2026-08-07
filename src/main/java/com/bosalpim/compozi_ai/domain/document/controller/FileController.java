@@ -6,6 +6,8 @@ import com.bosalpim.compozi_ai.domain.document.service.FileService;
 import com.bosalpim.compozi_ai.domain.document.util.FileValidator;
 import com.bosalpim.compozi_ai.general.response.ApiSuccess;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -28,8 +30,14 @@ public class FileController {
 
     @Operation(summary = "파일 업로드", description = "파일 입력으로 구매 데이터를 입력한다.")
     @ApiSuccess(statusCode = HttpStatus.CREATED, message = "파일 입력이 완료 되었습니다.")
+    @ApiResponse(responseCode = "400", description = "잘못된 파일 확장자이거나 빈 파일인 경우")
     @PostMapping(value = "/document", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public CreateItemDocumentResDto createCommonFile(@RequestPart("file") MultipartFile file) {
+    public CreateItemDocumentResDto createCommonFile(
+            @Parameter(
+                    description = "업로드할 엑셀/csv 등 구매 증빙 파일",
+                    required = true
+            )
+            @RequestPart("file") MultipartFile file) {
         fileValidator.validateDocumentFile(file);
         return fileService.createCommonFile(file);
     }
@@ -37,6 +45,7 @@ public class FileController {
 
     @Operation(summary = "수기 업로드", description = "수기 입력으로 구매 데이터를 입력한다.")
     @ApiSuccess(statusCode = HttpStatus.CREATED, message = "수기 입력이 완료 되었습니다.")
+    @ApiResponse(responseCode = "400", description = "필수 입력 값이 누락된 경우")
     @PostMapping("/manual-document")
     public CreateItemDocumentResDto createManualFile(@RequestBody CreateManualItemDocumentListReqDto reqDto) {
         return fileService.createManualFile(reqDto);
