@@ -119,4 +119,44 @@ public class IssueService {
         return new BulkActionResponseDto(ids.size(), successIds.size(), failedList.size(), successIds, failedList);
     }
 
+    @Transactional
+    public BulkActionResponseDto bulkReject(List<Long> ids) {
+
+        List<Item> items = itemRepository.findAllById(ids);
+        Map<Long, Item> itemMap = items.stream()
+                .collect(Collectors.toMap(Item::getId, item -> item));
+
+        List<Long> successIds = new ArrayList<>();
+        List<BulkActionResponseDto.FailedItemDto> failedList = new ArrayList<>();
+        List<ChangeLog> logsToSave = new ArrayList<>();
+
+        for (Long id : ids) {
+            Item item = itemMap.get(id);
+
+            if (item == null) {
+                failedList.add(new BulkActionResponseDto.FailedItemDto(id, BadStatusCode.ITEM_NOT_FOUND));
+                continue;
+            }
+            if (item.getReviewStatus() == ReviewStatus.APPROVED) {
+                failedList.add(new BulkActionResponseDto.FailedItemDto(id, BadStatusCode.ITEM_ALREADY_APPROVED));
+                continue;
+            }
+            if (item.getReviewStatus() == ReviewStatus.REJECTED) {
+                failedList.add(new BulkActionResponseDto.FailedItemDto(id, BadStatusCode.ITEM_ALREADY_REJECTED));
+                continue;
+            }
+
+            item.reject();
+            logsToSave.add(ChangeLog.of(item, Action.REJECT));
+            successIds.add(id);
+        }
+
+        if (successIds.isEmpty()) {
+            throw new CustomException(BadStatusCode.ALL_ITEMS_FAILED);
+        }
+
+        changeLogRepository.saveAll(logsToSave);
+
+        return new BulkActionResponseDto(ids.size(), successIds.size(), failedList.size(), successIds, failedList);
+    }
 }
