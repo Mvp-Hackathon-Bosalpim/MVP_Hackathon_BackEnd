@@ -31,7 +31,8 @@ public class ItemService {
         itemDocumentValidator.markDuplicatesForCommon(reqDtos);
 
         // 중복 탐지
-        // TODO :  1. 필드 누락은 (Bean Validation) 사용 추천, 2. 규격, 단위 처리, 3. 해당 이상 탐지에 대한 이슈 테이블 생성 필요
+        // TODO :  1. 필드 누락은 (Bean Validation) 사용 추천, 2. 규격, 단위 처리,
+        //  3. 해당 이상 탐지에 대한 이슈 테이블 생성 필요 + item 상태변화 구현 필요
         return processAndSaveItems(
                 reqDtos.size(),
                 i -> reqDtos.get(i).getDuplicateGroupKey(),
