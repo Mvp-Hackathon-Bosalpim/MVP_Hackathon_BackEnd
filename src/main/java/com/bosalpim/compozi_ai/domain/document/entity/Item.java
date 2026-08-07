@@ -18,6 +18,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PostPersist;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
@@ -31,7 +32,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
-@Table(name = "items")
+@Table(name = "items", uniqueConstraints = @UniqueConstraint(columnNames = {"file_id", "doc_id"}))
 public class Item {
 
     @Id
@@ -91,7 +92,7 @@ public class Item {
         }
     }
 
-    public static Item CreateCommonItem(CreateCommonItemDocumentReqDto reqDto, File file) {
+    public static Item CreateCommonItem(CreateCommonItemDocumentReqDto reqDto, File file, String normalizedItemName) {
         return Item.builder()
                 .file(file)
                 .docId(reqDto.getDocId())
@@ -99,6 +100,7 @@ public class Item {
                 .rowNo(reqDto.getRowNo())
                 .supplierName(reqDto.getSupplierName())
                 .rawItemName(reqDto.getRawItemName())
+                .normalizedItemName(normalizedItemName)
                 .spec(reqDto.getSpec())
                 .unit(reqDto.getUnit())
                 .priceBefore(reqDto.getPriceBefore())
@@ -109,12 +111,13 @@ public class Item {
 
     }
 
-    public static Item CreateManualItem(CreateManualItemDocumentReqDto reqDto, File file) {
+    public static Item CreateManualItem(CreateManualItemDocumentReqDto reqDto, File file, String normalizedItemName) {
         return Item.builder()
                 .file(file)
                 .sourceType(SourceType.MANUAL)
                 .supplierName(reqDto.getSupplierName())
                 .rawItemName(reqDto.getRawItemName())
+                .normalizedItemName(normalizedItemName)
                 .spec(reqDto.getSpec())
                 .unit(reqDto.getUnit())
                 .priceBefore(reqDto.getPriceBefore())
@@ -124,5 +127,12 @@ public class Item {
                 .build();
     }
 
+    public void approve() {
+        this.reviewStatus = ReviewStatus.APPROVED;
+    }
+
+    public void reject() {
+        this.reviewStatus = ReviewStatus.REJECTED;
+    }
 
 }

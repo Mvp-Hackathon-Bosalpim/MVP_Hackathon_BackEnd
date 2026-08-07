@@ -1,4 +1,4 @@
-package com.bosalpim.compozi_ai.domain.document.util.parser;
+package com.bosalpim.compozi_ai.domain.document.component.parser;
 
 import com.bosalpim.compozi_ai.domain.document.dto.request.commonFile.CreateCommonItemDocumentReqDto;
 import java.util.List;

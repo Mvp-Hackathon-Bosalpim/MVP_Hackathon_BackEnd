@@ -15,6 +15,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.NoArgsConstructor;
 
 @Entity
@@ -44,5 +45,32 @@ public class ChangeLog {
     @JoinColumn(name = "item_id")
     private Item item;
 
+    @Builder
+    public ChangeLog(Action action, String fieldName, String fromValue, String toValue, String memo, LocalDateTime at,
+                     Item item) {
+        this.action = action;
+        this.fieldName = fieldName;
+        this.fromValue = fromValue;
+        this.toValue = toValue;
+        this.memo = memo;
+        this.at = at;
+        this.item = item;
+    }
 
+    public static ChangeLog of(Item item, Action action) {
+        return ChangeLog.builder()
+                .item(item)
+                .action(action)
+                .at(LocalDateTime.now())
+                .build();
+    }
+
+    public static ChangeLog of(Item item, Action action, String memo) {
+        return ChangeLog.builder()
+                .item(item)
+                .action(action)
+                .memo(memo)
+                .at(LocalDateTime.now())
+                .build();
+    }
 }

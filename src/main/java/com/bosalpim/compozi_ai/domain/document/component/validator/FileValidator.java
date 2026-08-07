@@ -1,4 +1,4 @@
-package com.bosalpim.compozi_ai.domain.document.util;
+package com.bosalpim.compozi_ai.domain.document.component.validator;
 
 import com.bosalpim.compozi_ai.general.enums.BadStatusCode;
 import com.bosalpim.compozi_ai.general.exception.CustomException;

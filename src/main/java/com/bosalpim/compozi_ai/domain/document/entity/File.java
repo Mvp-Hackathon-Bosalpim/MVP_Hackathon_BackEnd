@@ -2,6 +2,7 @@ package com.bosalpim.compozi_ai.domain.document.entity;
 
 import com.bosalpim.compozi_ai.domain.document.enums.InputMethod;
 import com.bosalpim.compozi_ai.general.entity.BaseTimeStampEntity;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -27,6 +28,7 @@ public class File extends BaseTimeStampEntity {
     private String fileName;
 
     @Enumerated(value = EnumType.STRING)
+    @Column(nullable = false)
     private InputMethod inputMethod;
 
     @Builder

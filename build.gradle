@@ -41,9 +41,12 @@ dependencies {
 
     // Apache POI (Excel 파싱)
     implementation 'org.apache.poi:poi-ooxml:5.2.5'
-    
+
     // OpenCSV (CSV 파싱)
     implementation 'com.opencsv:opencsv:5.9'
+
+    // gemini API 호출 위한 webClient
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
 }
 

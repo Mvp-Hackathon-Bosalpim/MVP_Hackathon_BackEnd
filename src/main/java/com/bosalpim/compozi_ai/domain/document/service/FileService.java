@@ -1,12 +1,12 @@
 package com.bosalpim.compozi_ai.domain.document.service;
 
+import com.bosalpim.compozi_ai.domain.document.component.parser.FileParser;
 import com.bosalpim.compozi_ai.domain.document.dto.request.manualFile.CreateManualItemDocumentListReqDto;
 import com.bosalpim.compozi_ai.domain.document.dto.response.CreateItemDocumentResDto;
 import com.bosalpim.compozi_ai.domain.document.entity.File;
 import com.bosalpim.compozi_ai.domain.document.entity.Item;
 import com.bosalpim.compozi_ai.domain.document.enums.InputMethod;
 import com.bosalpim.compozi_ai.domain.document.repository.FileRepository;
-import com.bosalpim.compozi_ai.domain.document.util.parser.FileParser;
 import com.bosalpim.compozi_ai.general.enums.BadStatusCode;
 import com.bosalpim.compozi_ai.general.exception.CustomException;
 import java.util.List;
