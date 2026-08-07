@@ -1,6 +1,6 @@
 package com.bosalpim.compozi_ai.domain.document.service;
 
-import com.bosalpim.compozi_ai.domain.document.component.validator.ItemDocumentValidator;
+import com.bosalpim.compozi_ai.domain.document.component.validator.ItemDocumentDuplicateValidator;
 import com.bosalpim.compozi_ai.domain.document.dto.request.commonFile.CreateCommonItemDocumentReqDto;
 import com.bosalpim.compozi_ai.domain.document.dto.request.manualFile.CheckDuplicatedManualItemDto;
 import com.bosalpim.compozi_ai.domain.document.dto.request.manualFile.CreateManualItemDocumentListReqDto;
@@ -25,10 +25,10 @@ public class ItemService {
 
     private final ItemRepository itemRepository;
     private final DuplicatedGroupRepository duplicatedGroupRepository;
-    private final ItemDocumentValidator itemDocumentValidator;
+    private final ItemDocumentDuplicateValidator itemDocumentDuplicateValidator;
 
     public List<Item> createCommonItem(List<CreateCommonItemDocumentReqDto> reqDtos, File savedFile) {
-        itemDocumentValidator.markDuplicatesForCommon(reqDtos);
+        itemDocumentDuplicateValidator.markDuplicatesForCommon(reqDtos); // 중복 탐지
 
         // 중복 탐지
         // TODO :  1. 필드 누락은 (Bean Validation) 사용 추천, 2. 규격, 단위 처리,
@@ -42,7 +42,8 @@ public class ItemService {
 
     public List<Item> createManualItem(CreateManualItemDocumentListReqDto reqDtos, List<File> savedFiles) {
         List<CreateManualItemDocumentReqDto> itemDtos = reqDtos.getItems();
-        List<CheckDuplicatedManualItemDto> checkedDtos = itemDocumentValidator.markDuplicatesForManual(itemDtos);
+        List<CheckDuplicatedManualItemDto> checkedDtos = itemDocumentDuplicateValidator.markDuplicatesForManual(
+                itemDtos); // 중복 탐지
 
         return processAndSaveItems(
                 itemDtos.size(),

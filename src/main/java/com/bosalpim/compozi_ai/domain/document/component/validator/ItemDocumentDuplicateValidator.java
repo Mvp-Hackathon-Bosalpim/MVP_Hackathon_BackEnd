@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class ItemDocumentValidator {
+public class ItemDocumentDuplicateValidator {
 
     private final ItemNameMapper itemNameMapper;
 
