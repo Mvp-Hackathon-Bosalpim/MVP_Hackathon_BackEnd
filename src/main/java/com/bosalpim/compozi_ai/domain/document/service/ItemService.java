@@ -1,8 +1,8 @@
 package com.bosalpim.compozi_ai.domain.document.service;
 
-import com.bosalpim.compozi_ai.domain.document.component.mapper.ItemNameMapper;
 import com.bosalpim.compozi_ai.domain.document.component.validator.ItemDocumentValidator;
 import com.bosalpim.compozi_ai.domain.document.dto.request.commonFile.CreateCommonItemDocumentReqDto;
+import com.bosalpim.compozi_ai.domain.document.dto.request.manualFile.CheckDuplicatedManualItemDto;
 import com.bosalpim.compozi_ai.domain.document.dto.request.manualFile.CreateManualItemDocumentListReqDto;
 import com.bosalpim.compozi_ai.domain.document.dto.request.manualFile.CreateManualItemDocumentReqDto;
 import com.bosalpim.compozi_ai.domain.document.entity.File;
@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -22,48 +24,55 @@ import org.springframework.stereotype.Service;
 public class ItemService {
 
     private final ItemRepository itemRepository;
-    private final DuplicatedGroupRepository duplicatedGroupRepository; // 일단 레포 가져오기
+    private final DuplicatedGroupRepository duplicatedGroupRepository;
     private final ItemDocumentValidator itemDocumentValidator;
-    private final ItemNameMapper itemNameMapper;
-
 
     public List<Item> createCommonItem(List<CreateCommonItemDocumentReqDto> reqDtos, File savedFile) {
+        itemDocumentValidator.markDuplicatesForCommon(reqDtos);
 
-        itemDocumentValidator.markDuplicates(reqDtos);
+        // 중복 탐지
+        // TODO :  1. 필드 누락은 (Bean Validation) 사용 추천, 2. 규격, 단위 처리, 3. 해당 이상 탐지에 대한 이슈 테이블 생성 필요
+        return processAndSaveItems(
+                reqDtos.size(),
+                i -> reqDtos.get(i).getDuplicateGroupKey(),
+                (i, group) -> Item.CreateCommonItem(reqDtos.get(i), savedFile, group)
+        );
+    }
 
+    public List<Item> createManualItem(CreateManualItemDocumentListReqDto reqDtos, List<File> savedFiles) {
+        List<CreateManualItemDocumentReqDto> itemDtos = reqDtos.getItems();
+        List<CheckDuplicatedManualItemDto> checkedDtos = itemDocumentValidator.markDuplicatesForManual(itemDtos);
+
+        return processAndSaveItems(
+                itemDtos.size(),
+                i -> checkedDtos.get(i).getDuplicateGroupKey(),
+                (i, group) -> Item.CreateManualItem(
+                        itemDtos.get(i),
+                        savedFiles.get(i),
+                        checkedDtos.get(i).getNormalizedItemName(),
+                        group
+                )
+        );
+    }
+
+    private List<Item> processAndSaveItems(int size, Function<Integer, String> keyExtractor,
+                                           BiFunction<Integer, DuplicatedGroup, Item> itemMapper) {
         Map<String, DuplicatedGroup> groupMap = new HashMap<>();
         List<Item> items = new ArrayList<>();
 
-        for (CreateCommonItemDocumentReqDto dto : reqDtos) {
+        for (int i = 0; i < size; i++) {
+            String duplicateKey = keyExtractor.apply(i);
             DuplicatedGroup group = null;
 
-            // 마킹된 중복키가 있는 경우 (2번째 이후 건)
-            if (dto.getDuplicateGroupKey() != null) {
-                group = groupMap.computeIfAbsent(
-                        dto.getDuplicateGroupKey(),
-                        key -> DuplicatedGroup.create()
-                );
+            if (duplicateKey != null) {
+                group = groupMap.computeIfAbsent(duplicateKey, key -> DuplicatedGroup.create());
             }
 
-            Item item = Item.CreateCommonItem(dto, savedFile, group);
-            items.add(item);
+            items.add(itemMapper.apply(i, group));
         }
+
         if (!groupMap.isEmpty()) {
             duplicatedGroupRepository.saveAll(groupMap.values());
-        }
-
-        return itemRepository.saveAll(items);
-    }
-
-    public List<Item> createManualItem(CreateManualItemDocumentListReqDto reqDto, List<File> savedFiles) {
-        List<CreateManualItemDocumentReqDto> itemDtos = reqDto.getItems();
-        List<Item> items = new ArrayList<>();
-
-        for (int i = 0; i < itemDtos.size(); i++) {
-            File file = savedFiles.get(i);
-            CreateManualItemDocumentReqDto itemDto = itemDtos.get(i);
-            String normalizedName = itemNameMapper.map(itemDto.getRawItemName());
-            items.add(Item.CreateManualItem(itemDto, file, normalizedName));
         }
 
         return itemRepository.saveAll(items);

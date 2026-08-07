@@ -112,9 +112,11 @@ public class Item {
 
     }
 
-    public static Item CreateManualItem(CreateManualItemDocumentReqDto reqDto, File file, String normalizedItemName) {
+    public static Item CreateManualItem(CreateManualItemDocumentReqDto reqDto, File file, String normalizedItemName,
+                                        DuplicatedGroup group) {
         return Item.builder()
                 .file(file)
+                .duplicatedGroup(group)
                 .sourceType(SourceType.MANUAL)
                 .supplierName(reqDto.getSupplierName())
                 .rawItemName(reqDto.getRawItemName())
