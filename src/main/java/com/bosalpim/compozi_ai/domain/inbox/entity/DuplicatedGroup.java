@@ -18,5 +18,7 @@ public class DuplicatedGroup extends BaseTimeStampEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-
+    public static DuplicatedGroup create() {
+        return new DuplicatedGroup();
+    }
 }

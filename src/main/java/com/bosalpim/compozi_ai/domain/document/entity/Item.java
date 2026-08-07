@@ -92,15 +92,16 @@ public class Item {
         }
     }
 
-    public static Item CreateCommonItem(CreateCommonItemDocumentReqDto reqDto, File file, String normalizedItemName) {
+    public static Item CreateCommonItem(CreateCommonItemDocumentReqDto reqDto, File file, DuplicatedGroup group) {
         return Item.builder()
                 .file(file)
+                .duplicatedGroup(group)
                 .docId(reqDto.getDocId())
                 .sourceType(SourceType.from(reqDto.getSourceType()))
                 .rowNo(reqDto.getRowNo())
                 .supplierName(reqDto.getSupplierName())
                 .rawItemName(reqDto.getRawItemName())
-                .normalizedItemName(normalizedItemName)
+                .normalizedItemName(reqDto.getNormalizedItemName())
                 .spec(reqDto.getSpec())
                 .unit(reqDto.getUnit())
                 .priceBefore(reqDto.getPriceBefore())
@@ -111,9 +112,11 @@ public class Item {
 
     }
 
-    public static Item CreateManualItem(CreateManualItemDocumentReqDto reqDto, File file, String normalizedItemName) {
+    public static Item CreateManualItem(CreateManualItemDocumentReqDto reqDto, File file, String normalizedItemName,
+                                        DuplicatedGroup group) {
         return Item.builder()
                 .file(file)
+                .duplicatedGroup(group)
                 .sourceType(SourceType.MANUAL)
                 .supplierName(reqDto.getSupplierName())
                 .rawItemName(reqDto.getRawItemName())
