@@ -1,0 +1,7 @@
+package com.bosalpim.compozi_ai.domain.document.repository;
+
+import com.bosalpim.compozi_ai.domain.document.entity.File;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface FileRepository extends JpaRepository<File, Long> {
+}

@@ -1,6 +1,6 @@
-package com.bosalpim.compozi_ai.domain.itemDoc.entity;
+package com.bosalpim.compozi_ai.domain.document.entity;
 
-import com.bosalpim.compozi_ai.domain.itemDoc.enums.InputMethod;
+import com.bosalpim.compozi_ai.domain.document.enums.InputMethod;
 import com.bosalpim.compozi_ai.general.entity.BaseTimeStampEntity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -10,12 +10,15 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
+@Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "documents")
-public class Document extends BaseTimeStampEntity {
+@Table(name = "files")
+public class File extends BaseTimeStampEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,5 +29,16 @@ public class Document extends BaseTimeStampEntity {
     @Enumerated(value = EnumType.STRING)
     private InputMethod inputMethod;
 
+    @Builder
+    public File(String fileName, InputMethod inputMethod) {
+        this.fileName = fileName;
+        this.inputMethod = inputMethod;
+    }
 
+    public static File createFile(String fileName, InputMethod inputMethod) {
+        return File.builder()
+                .fileName(fileName)
+                .inputMethod(inputMethod)
+                .build();
+    }
 }
