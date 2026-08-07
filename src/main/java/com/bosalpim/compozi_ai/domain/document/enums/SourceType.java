@@ -8,6 +8,7 @@ public enum SourceType {
     XLSX,
     IMAGE,
     MANUAL,
+    CSV,
     UNKNOWN;
 
     public static SourceType from(String value) {

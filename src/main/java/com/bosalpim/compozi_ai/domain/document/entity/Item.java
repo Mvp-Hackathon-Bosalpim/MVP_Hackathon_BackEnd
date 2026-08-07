@@ -127,5 +127,12 @@ public class Item {
                 .build();
     }
 
+    public void approve() {
+        this.reviewStatus = ReviewStatus.APPROVED;
+    }
+
+    public void reject() {
+        this.reviewStatus = ReviewStatus.REJECTED;
+    }
 
 }
