@@ -41,4 +41,22 @@ public class IssueService {
         return item.getId();
     }
 
+    @Transactional
+    public Long reject(Long id, String memo) {
+        Item item = itemRepository.findById(id)
+                .orElseThrow(() -> new CustomException(BadStatusCode.ITEM_NOT_FOUND));
+
+        if (item.getReviewStatus() == ReviewStatus.APPROVED) {
+            throw new CustomException(BadStatusCode.ITEM_ALREADY_APPROVED);
+        }
+
+        if (item.getReviewStatus() == ReviewStatus.REJECTED) {
+            throw new CustomException(BadStatusCode.ITEM_ALREADY_REJECTED);
+        }
+
+        item.reject();
+        changeLogRepository.save(ChangeLog.of(item, Action.REJECT, memo));
+        return item.getId();
+    }
+
 }
