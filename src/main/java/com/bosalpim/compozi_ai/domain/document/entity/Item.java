@@ -92,9 +92,10 @@ public class Item {
         }
     }
 
-    public static Item CreateCommonItem(CreateCommonItemDocumentReqDto reqDto, File file) {
+    public static Item CreateCommonItem(CreateCommonItemDocumentReqDto reqDto, File file, DuplicatedGroup group) {
         return Item.builder()
                 .file(file)
+                .duplicatedGroup(group)
                 .docId(reqDto.getDocId())
                 .sourceType(SourceType.from(reqDto.getSourceType()))
                 .rowNo(reqDto.getRowNo())

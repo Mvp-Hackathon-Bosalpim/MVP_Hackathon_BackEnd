@@ -39,11 +39,17 @@ public class ItemService {
 
             // 마킹된 중복키가 있는 경우 (2번째 이후 건)
             if (dto.getDuplicateGroupKey() != null) {
-                // 중복 그룹 저장
+                group = groupMap.computeIfAbsent(
+                        dto.getDuplicateGroupKey(),
+                        key -> DuplicatedGroup.create()
+                );
             }
 
-            Item item = Item.CreateCommonItem(dto, savedFile);
+            Item item = Item.CreateCommonItem(dto, savedFile, group);
             items.add(item);
+        }
+        if (!groupMap.isEmpty()) {
+            duplicatedGroupRepository.saveAll(groupMap.values());
         }
 
         return itemRepository.saveAll(items);
