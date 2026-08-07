@@ -2,7 +2,7 @@ name: CI-CD.yml
 on:
   pull_request:
     types: [ closed ]
-    branches: [ "main" ]
+    branches: [ "test" ]
 jobs:
   build:
     if: github.event.pull_request.merged == true
