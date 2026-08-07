@@ -18,6 +18,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PostPersist;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
@@ -31,7 +32,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
-@Table(name = "items")
+@Table(name = "items", uniqueConstraints = @UniqueConstraint(columnNames = {"file_id", "doc_id"}))
 public class Item {
 
     @Id
