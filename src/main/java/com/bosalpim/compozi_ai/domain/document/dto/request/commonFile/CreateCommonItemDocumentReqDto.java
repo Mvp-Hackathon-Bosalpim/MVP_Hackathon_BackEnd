@@ -7,7 +7,7 @@ import lombok.Setter;
 
 @Getter
 @Builder
-public class CreateCommonItemDocumentReqDto {
+public class T {
 
     private String docId;
 
