@@ -1,4 +1,4 @@
-package com.bosalpim.compozi_ai.domain.itemDoc.enums;
+package com.bosalpim.compozi_ai.domain.document.enums;
 
 public enum ReviewStatus {
     NEW,

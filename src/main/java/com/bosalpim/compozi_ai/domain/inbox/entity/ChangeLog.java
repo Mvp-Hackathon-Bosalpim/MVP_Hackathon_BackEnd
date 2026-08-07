@@ -1,7 +1,7 @@
 package com.bosalpim.compozi_ai.domain.inbox.entity;
 
-import com.bosalpim.compozi_ai.domain.enums.Action;
-import com.bosalpim.compozi_ai.domain.itemDoc.entity.Item;
+import com.bosalpim.compozi_ai.domain.document.entity.Item;
+import com.bosalpim.compozi_ai.domain.inbox.enums.Action;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
