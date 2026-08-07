@@ -36,9 +36,7 @@ public class FileService {
 
         File savedFile = fileRepository.save(File.createFile(filename, InputMethod.FILE)); // 파일 정보 저장
 
-        // TODO : 여기쯤에 1. 정규화 품목명 기능 , 2. 유효성 검사 (규격 불일치, 단위 불일치, 중복, 필수 데이터 누락)
-
-        List<Item> items = itemService.createCommonItem(parser.parse(file), savedFile); // 각 아이템 (row) 정보 저장 -> 인라인화 예정
+        List<Item> items = itemService.createCommonItem(parser.parse(file), savedFile);
         return CreateItemDocumentResDto.from(items);
 
     }
