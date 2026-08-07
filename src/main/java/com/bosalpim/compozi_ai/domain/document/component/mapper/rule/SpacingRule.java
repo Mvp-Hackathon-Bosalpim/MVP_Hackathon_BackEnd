@@ -1,7 +1,11 @@
 package com.bosalpim.compozi_ai.domain.document.component.mapper.rule;
 
 import java.util.List;
+import org.springframework.core.annotation.Order;
+import org.springframework.stereotype.Component;
 
+@Order(3)
+@Component
 public class SpacingRule implements ItemNormalizationRule {
     // 띄어 쓰기 규칙
     private static final List<String> KEYWORDS = List.of(
