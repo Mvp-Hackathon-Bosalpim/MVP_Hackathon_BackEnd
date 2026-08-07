@@ -1,7 +1,9 @@
 package com.bosalpim.compozi_ai.domain.inbox.controller;
 
-import com.bosalpim.compozi_ai.domain.inbox.dto.ItemActionResponseDto;
-import com.bosalpim.compozi_ai.domain.inbox.dto.RejectRequestDto;
+import com.bosalpim.compozi_ai.domain.inbox.dto.request.BulkIdsRequestDto;
+import com.bosalpim.compozi_ai.domain.inbox.dto.request.RejectRequestDto;
+import com.bosalpim.compozi_ai.domain.inbox.dto.response.BulkActionResponseDto;
+import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemActionResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.service.IssueService;
 import com.bosalpim.compozi_ai.general.response.ApiSuccess;
 import io.swagger.v3.oas.annotations.Operation;
@@ -77,5 +79,21 @@ public class ItemInboxController {
         Long rejectId = issueService.reject(id, reqDto.getMemo());
         return new ItemActionResponseDto(rejectId);
 
+    }
+
+    @Operation(
+            summary = "여러 품목 일괄 승인",
+            description = "요청받은 id 목록 중 승인 가능한 품목만 승인 처리하고, 실패한 항목은 사유와 함께 반환한다."
+    )
+    @ApiSuccess(message = "요청한 품목이 모두 성공적으로 승인되었습니다.")
+    @ApiResponse(
+            responseCode = "400",
+            description = "요청한 모든 품목의 처리에 실패한 경우",
+            content = @Content(examples = @ExampleObject(
+                    value = "{ \"status\": \"FAIL\", \"code\": 400, \"message\": \"요청한 모든 품목의 처리에 실패했습니다.\", \"data\": null }"
+            )))
+    @PostMapping("/documents/bulk-approve")
+    public BulkActionResponseDto bulkApprove(@RequestBody BulkIdsRequestDto reqDto) {
+        return issueService.bulkApprove(reqDto.getIds());
     }
 }

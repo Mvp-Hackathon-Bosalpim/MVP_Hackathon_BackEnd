@@ -1,4 +1,4 @@
-package com.bosalpim.compozi_ai.domain.inbox.dto;
+package com.bosalpim.compozi_ai.domain.inbox.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;

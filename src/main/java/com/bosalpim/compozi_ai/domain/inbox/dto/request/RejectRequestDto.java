@@ -1,4 +1,4 @@
-package com.bosalpim.compozi_ai.domain.inbox.dto;
+package com.bosalpim.compozi_ai.domain.inbox.dto.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
