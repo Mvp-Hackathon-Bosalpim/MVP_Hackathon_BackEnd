@@ -64,4 +64,13 @@ public class ChangeLog {
                 .at(LocalDateTime.now())
                 .build();
     }
+
+    public static ChangeLog of(Item item, Action action, String memo) {
+        return ChangeLog.builder()
+                .item(item)
+                .action(action)
+                .memo(memo)
+                .at(LocalDateTime.now())
+                .build();
+    }
 }

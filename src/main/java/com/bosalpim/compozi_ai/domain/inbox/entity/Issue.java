@@ -14,9 +14,12 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
+@Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "issues")
 public class Issue {
@@ -36,4 +39,12 @@ public class Issue {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "item_id")
     private Item item;
+
+    @Builder
+    public Issue(IssueType issueType, String detail, Boolean resolved, Item item) {
+        this.issueType = issueType;
+        this.detail = detail;
+        this.resolved = resolved;
+        this.item = item;
+    }
 }
