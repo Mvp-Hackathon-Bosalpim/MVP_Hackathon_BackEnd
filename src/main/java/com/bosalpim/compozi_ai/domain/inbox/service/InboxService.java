@@ -203,8 +203,23 @@ public class InboxService {
 
     @Transactional(readOnly = true)
     public PageResponseDto<ItemListResponseDto> getItems(Pageable pageable) {
-        Page<ItemListResponseDto> page = itemRepository.findByDeletedAtIsNull(pageable)
-                .map(ItemListResponseDto::from);
+        Page<Item> itemPage = itemRepository.findByDeletedAtIsNull(pageable);
+
+        List<Long> itemIds = itemPage.getContent().stream()
+                .map(Item::getId)
+                .toList();
+
+        List<Issue> issues = issueRepository.findByItemIdInAndResolvedFalse(itemIds);
+        Map<Long, List<String>> issueTypesByItemId = issues.stream()
+                .collect(Collectors.groupingBy(
+                        issue -> issue.getItem().getId(),
+                        Collectors.mapping(issue -> issue.getIssueType().name(), Collectors.toList())
+                ));
+
+        Page<ItemListResponseDto> page = itemPage.map(item ->
+                ItemListResponseDto.from(item, issueTypesByItemId.getOrDefault(item.getId(), List.of()))
+        );
+
         return new PageResponseDto<>(page);
     }
 }

@@ -2,6 +2,7 @@ package com.bosalpim.compozi_ai.domain.inbox.dto.response;
 
 import com.bosalpim.compozi_ai.domain.document.entity.Item;
 import java.time.LocalDate;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -20,8 +21,9 @@ public class ItemListResponseDto {
     private Long priceAfter;
     private LocalDate effectiveDate;
     private String reviewStatus;
+    private List<String> issueTypes;
 
-    public static ItemListResponseDto from(Item item) {
+    public static ItemListResponseDto from(Item item, List<String> issueTypes) {
         return new ItemListResponseDto(
                 item.getId(),
                 item.getDocId(),
@@ -34,8 +36,8 @@ public class ItemListResponseDto {
                 item.getPriceBefore(),
                 item.getPriceAfter(),
                 item.getEffectiveDate(),
-                item.getReviewStatus().name()
+                item.getReviewStatus().name(),
+                issueTypes
         );
     }
-
 }
