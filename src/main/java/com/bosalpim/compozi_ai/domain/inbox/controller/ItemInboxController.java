@@ -4,8 +4,11 @@ import com.bosalpim.compozi_ai.domain.inbox.dto.request.BulkIdsRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.RejectRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.BulkActionResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemActionResponseDto;
-import com.bosalpim.compozi_ai.domain.inbox.service.IssueService;
+import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemListResponseDto;
+import com.bosalpim.compozi_ai.domain.inbox.dto.response.StatusCountResponseDto;
+import com.bosalpim.compozi_ai.domain.inbox.service.InboxService;
 import com.bosalpim.compozi_ai.general.response.ApiSuccess;
+import com.bosalpim.compozi_ai.general.response.PageResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -13,6 +16,10 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,7 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1")
 public class ItemInboxController {
 
-    private final IssueService issueService;
+    private final InboxService inboxService;
 
     @Operation(summary = "특정 품목 승인", description = "미해결 이슈가 없는 품목을 승인 처리한다.")
     @ApiSuccess(message = "승인 요청 성공")
@@ -45,7 +52,7 @@ public class ItemInboxController {
     public ItemActionResponseDto approve(
             @Parameter(description = "품목 ID", required = true)
             @PathVariable long id) {
-        Long approveId = issueService.approve(id);
+        Long approveId = inboxService.approve(id);
         return new ItemActionResponseDto(approveId);
     }
 
@@ -76,7 +83,7 @@ public class ItemInboxController {
             @PathVariable long id,
             @RequestBody RejectRequestDto reqDto) {
 
-        Long rejectId = issueService.reject(id, reqDto.getMemo());
+        Long rejectId = inboxService.reject(id, reqDto.getMemo());
         return new ItemActionResponseDto(rejectId);
 
     }
@@ -94,7 +101,7 @@ public class ItemInboxController {
             )))
     @PostMapping("/documents/bulk-approve")
     public BulkActionResponseDto bulkApprove(@RequestBody BulkIdsRequestDto reqDto) {
-        return issueService.bulkApprove(reqDto.getIds());
+        return inboxService.bulkApprove(reqDto.getIds());
     }
 
 
@@ -108,6 +115,35 @@ public class ItemInboxController {
             )))
     @PostMapping("/documents/bulk-reject")
     public BulkActionResponseDto bulkReject(@RequestBody BulkIdsRequestDto reqDto) {
-        return issueService.bulkReject(reqDto.getIds());
+        return inboxService.bulkReject(reqDto.getIds());
+    }
+
+    @Operation(summary = "여러 품목 일괄 재검토", description = "승인 또는 반려된 품목들을 다시 검토 대기(새 항목) 상태로 되돌린다.")
+    @ApiSuccess(message = "요청한 품목이 모두 성공적으로 재검토 처리되었습니다.")
+    @ApiResponse(
+            responseCode = "400",
+            description = "요청한 모든 품목의 처리에 실패한 경우",
+            content = @Content(examples = @ExampleObject(
+                    value = "{ \"status\": \"FAIL\", \"code\": 400, \"message\": \"요청한 모든 품목의 처리에 실패했습니다.\", \"data\": null }"
+            )))
+    @PostMapping("/documents/bulk-re-review")
+    public BulkActionResponseDto bulkReReview(@RequestBody BulkIdsRequestDto reqDto) {
+        return inboxService.bulkReReview(reqDto.getIds());
+    }
+
+    @Operation(summary = "전체 품목 목록 조회", description = "삭제되지 않은 품목 전체를 페이지네이션하여 조회한다.")
+    @ApiSuccess(message = "전체 조회 성공")
+    @GetMapping("/documents")
+    public PageResponseDto<ItemListResponseDto> getItems(
+            @PageableDefault(page = 0, size = 20, sort = "id", direction = Sort.Direction.ASC)
+            Pageable pageable) {
+        return inboxService.getItems(pageable);
+    }
+
+    @Operation(summary = "품목 상태별 개수 조회", description = "review_status별 전체 품목 개수를 조회한다.")
+    @ApiSuccess(message = "상태별 개수 조회 성공")
+    @GetMapping("/documents/status-counts")
+    public StatusCountResponseDto getStatusCounts() {
+        return inboxService.getStatusCounts();
     }
 }

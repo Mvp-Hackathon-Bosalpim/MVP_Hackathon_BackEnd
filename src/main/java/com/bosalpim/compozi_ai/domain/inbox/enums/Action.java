@@ -5,4 +5,5 @@ public enum Action {
     APPROVE,
     REJECT,
     DELETE,
+    RE_REVIEW
 }
