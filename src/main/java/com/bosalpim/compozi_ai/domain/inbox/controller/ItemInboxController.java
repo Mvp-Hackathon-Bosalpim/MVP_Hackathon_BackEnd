@@ -110,4 +110,17 @@ public class ItemInboxController {
     public BulkActionResponseDto bulkReject(@RequestBody BulkIdsRequestDto reqDto) {
         return inboxService.bulkReject(reqDto.getIds());
     }
+
+    @Operation(summary = "여러 품목 일괄 재검토", description = "승인 또는 반려된 품목들을 다시 검토 대기(새 항목) 상태로 되돌린다.")
+    @ApiSuccess(message = "요청한 품목이 모두 성공적으로 재검토 처리되었습니다.")
+    @ApiResponse(
+            responseCode = "400",
+            description = "요청한 모든 품목의 처리에 실패한 경우",
+            content = @Content(examples = @ExampleObject(
+                    value = "{ \"status\": \"FAIL\", \"code\": 400, \"message\": \"요청한 모든 품목의 처리에 실패했습니다.\", \"data\": null }"
+            )))
+    @PostMapping("/documents/bulk-re-review")
+    public BulkActionResponseDto bulkReReview(@RequestBody BulkIdsRequestDto reqDto) {
+        return inboxService.bulkReReview(reqDto.getIds());
+    }
 }
