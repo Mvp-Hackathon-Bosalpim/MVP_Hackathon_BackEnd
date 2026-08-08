@@ -8,4 +8,6 @@ import lombok.Data;
 public class BulkIdsRequestDto {
     @Schema(example = "[1, 2, 3]")
     private List<Long> ids;
+    @Schema(example = "메모 입력")
+    private String memo;
 }
