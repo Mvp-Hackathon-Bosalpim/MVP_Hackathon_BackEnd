@@ -33,7 +33,7 @@ public class InboxService {
     private final ChangeLogRepository changeLogRepository;
 
     @Transactional
-    public Long approve(Long id) {
+    public Long approve(Long id, String memo) {
         Item item = itemRepository.findById(id)
                 .orElseThrow(() -> new CustomException(BadStatusCode.ITEM_NOT_FOUND));
 
@@ -48,7 +48,7 @@ public class InboxService {
         }
 
         item.approve();
-        changeLogRepository.save(ChangeLog.of(item, Action.APPROVE));
+        changeLogRepository.save(ChangeLog.of(item, Action.APPROVE, memo));
 
         return item.getId();
     }
@@ -72,7 +72,7 @@ public class InboxService {
     }
 
     @Transactional
-    public BulkActionResponseDto bulkApprove(List<Long> ids) {
+    public BulkActionResponseDto bulkApprove(List<Long> ids, String memo) {
 
         // Item들을 한 번의 쿼리로 다 가져옴 (쿼리1)
         List<Item> items = itemRepository.findAllById(ids);
@@ -112,7 +112,7 @@ public class InboxService {
             }
 
             item.approve();
-            logsToSave.add(ChangeLog.of(item, Action.APPROVE));
+            logsToSave.add(ChangeLog.of(item, Action.APPROVE, memo));
             successIds.add(id);
         }
 
@@ -126,7 +126,7 @@ public class InboxService {
     }
 
     @Transactional
-    public BulkActionResponseDto bulkReject(List<Long> ids) {
+    public BulkActionResponseDto bulkReject(List<Long> ids, String memo) {
 
         List<Item> items = itemRepository.findAllById(ids);
         Map<Long, Item> itemMap = items.stream()
@@ -153,7 +153,7 @@ public class InboxService {
             }
 
             item.reject();
-            logsToSave.add(ChangeLog.of(item, Action.REJECT));
+            logsToSave.add(ChangeLog.of(item, Action.REJECT, memo));
             successIds.add(id);
         }
 
@@ -167,7 +167,7 @@ public class InboxService {
     }
 
     @Transactional
-    public BulkActionResponseDto bulkReReview(List<Long> ids) {
+    public BulkActionResponseDto bulkReReview(List<Long> ids, String memo) {
 
         List<Item> items = itemRepository.findAllById(ids);
         Map<Long, Item> itemMap = items.stream()
@@ -190,7 +190,7 @@ public class InboxService {
             }
 
             item.reReview();
-            logsToSave.add(ChangeLog.of(item, Action.RE_REVIEW));
+            logsToSave.add(ChangeLog.of(item, Action.RE_REVIEW, memo));
             successIds.add(id);
         }
 
