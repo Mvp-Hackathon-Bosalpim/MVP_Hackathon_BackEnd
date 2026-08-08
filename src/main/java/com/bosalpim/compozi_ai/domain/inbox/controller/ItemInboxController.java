@@ -4,7 +4,7 @@ import com.bosalpim.compozi_ai.domain.inbox.dto.request.BulkIdsRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.RejectRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.BulkActionResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemActionResponseDto;
-import com.bosalpim.compozi_ai.domain.inbox.service.IssueService;
+import com.bosalpim.compozi_ai.domain.inbox.service.InboxService;
 import com.bosalpim.compozi_ai.general.response.ApiSuccess;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1")
 public class ItemInboxController {
 
-    private final IssueService issueService;
+    private final InboxService inboxService;
 
     @Operation(summary = "특정 품목 승인", description = "미해결 이슈가 없는 품목을 승인 처리한다.")
     @ApiSuccess(message = "승인 요청 성공")
@@ -45,7 +45,7 @@ public class ItemInboxController {
     public ItemActionResponseDto approve(
             @Parameter(description = "품목 ID", required = true)
             @PathVariable long id) {
-        Long approveId = issueService.approve(id);
+        Long approveId = inboxService.approve(id);
         return new ItemActionResponseDto(approveId);
     }
 
@@ -76,7 +76,7 @@ public class ItemInboxController {
             @PathVariable long id,
             @RequestBody RejectRequestDto reqDto) {
 
-        Long rejectId = issueService.reject(id, reqDto.getMemo());
+        Long rejectId = inboxService.reject(id, reqDto.getMemo());
         return new ItemActionResponseDto(rejectId);
 
     }
@@ -94,7 +94,7 @@ public class ItemInboxController {
             )))
     @PostMapping("/documents/bulk-approve")
     public BulkActionResponseDto bulkApprove(@RequestBody BulkIdsRequestDto reqDto) {
-        return issueService.bulkApprove(reqDto.getIds());
+        return inboxService.bulkApprove(reqDto.getIds());
     }
 
 
@@ -108,6 +108,6 @@ public class ItemInboxController {
             )))
     @PostMapping("/documents/bulk-reject")
     public BulkActionResponseDto bulkReject(@RequestBody BulkIdsRequestDto reqDto) {
-        return issueService.bulkReject(reqDto.getIds());
+        return inboxService.bulkReject(reqDto.getIds());
     }
 }

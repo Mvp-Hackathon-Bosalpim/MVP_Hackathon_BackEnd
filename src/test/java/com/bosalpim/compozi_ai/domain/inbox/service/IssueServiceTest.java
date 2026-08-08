@@ -28,7 +28,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 class IssueServiceTest {
 
     @Autowired
-    private IssueService issueService;
+    private InboxService inboxService;
     @Autowired
     private ItemRepository itemRepository;
     @Autowired
@@ -67,7 +67,7 @@ class IssueServiceTest {
         itemRepository.save(item);
 
         // when
-        Long approvedId = issueService.approve(item.getId());
+        Long approvedId = inboxService.approve(item.getId());
 
         // then
         Item approved = itemRepository.findById(approvedId).orElseThrow();
@@ -92,7 +92,7 @@ class IssueServiceTest {
         itemRepository.save(item);
 
         //when
-        Long rejectedId = issueService.reject(item.getId(), "알 수 없는 값이 있다.");
+        Long rejectedId = inboxService.reject(item.getId(), "알 수 없는 값이 있다.");
 
         //then
         Item rejected = itemRepository.findById(rejectedId).orElseThrow();
@@ -108,7 +108,7 @@ class IssueServiceTest {
         Item item3 = saveItem("DOC-203", ReviewStatus.NEW);
 
         // when
-        BulkActionResponseDto result = issueService.bulkApprove(
+        BulkActionResponseDto result = inboxService.bulkApprove(
                 List.of(item1.getId(), item2.getId(), item3.getId()));
 
         // then
@@ -131,7 +131,7 @@ class IssueServiceTest {
         Long notExistId = 9999L;
 
         // when
-        BulkActionResponseDto result = issueService.bulkApprove(
+        BulkActionResponseDto result = inboxService.bulkApprove(
                 List.of(newItem.getId(), approvedItem.getId(), notExistId));
 
         // then
@@ -163,7 +163,7 @@ class IssueServiceTest {
                 .build());
 
         // when
-        BulkActionResponseDto result = issueService.bulkApprove(List.of(item.getId()));
+        BulkActionResponseDto result = inboxService.bulkApprove(List.of(item.getId()));
 
         // then
         assertThat(result.getSuccessCount()).isEqualTo(0);
@@ -183,7 +183,7 @@ class IssueServiceTest {
         Item item3 = saveItem("DOC-303", ReviewStatus.NEW);
 
         // when
-        BulkActionResponseDto result = issueService.bulkReject(
+        BulkActionResponseDto result = inboxService.bulkReject(
                 List.of(item1.getId(), item2.getId(), item3.getId()));
 
         // then
@@ -206,7 +206,7 @@ class IssueServiceTest {
         Item rejectedItem = saveItem("DOC-306", ReviewStatus.REJECTED);
 
         // when
-        BulkActionResponseDto result = issueService.bulkReject(
+        BulkActionResponseDto result = inboxService.bulkReject(
                 List.of(newItem.getId(), approvedItem.getId(), rejectedItem.getId()));
 
         // then
@@ -229,7 +229,7 @@ class IssueServiceTest {
         Item rejectedItem = saveItem("DOC-308", ReviewStatus.REJECTED);
 
         // when & then
-        assertThatThrownBy(() -> issueService.bulkReject(
+        assertThatThrownBy(() -> inboxService.bulkReject(
                 List.of(approvedItem.getId(), rejectedItem.getId())))
                 .isInstanceOf(CustomException.class)
                 .extracting("badStatusCode")

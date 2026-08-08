@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-public class IssueService {
+public class InboxService {
     private final ItemRepository itemRepository;
     private final IssueRepository issueRepository;
     private final ChangeLogRepository changeLogRepository;
@@ -159,4 +159,6 @@ public class IssueService {
 
         return new BulkActionResponseDto(ids.size(), successIds.size(), failedList.size(), successIds, failedList);
     }
+
+    
 }
