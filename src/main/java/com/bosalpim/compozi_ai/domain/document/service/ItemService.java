@@ -15,6 +15,8 @@ import com.bosalpim.compozi_ai.domain.inbox.entity.Issue;
 import com.bosalpim.compozi_ai.domain.inbox.enums.IssueType;
 import com.bosalpim.compozi_ai.domain.inbox.repository.DuplicatedGroupRepository;
 import com.bosalpim.compozi_ai.domain.inbox.repository.IssueRepository;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -35,6 +37,7 @@ public class ItemService {
     private final IssueRepository issueRepository;
     private final ItemDocumentDuplicateValidator itemDocumentDuplicateValidator;
     private final ItemSpecAndUnitValidator itemSpecAndUnitValidator;
+    private final Validator validator;
 
     public List<Item> createCommonItem(List<CreateCommonItemDocumentReqDto> reqDtos, File savedFile) {
         itemDocumentDuplicateValidator.markDuplicatesForCommon(reqDtos); // 중복 마킹
@@ -48,10 +51,18 @@ public class ItemService {
                     ReviewStatus reviewStatus = determineReviewStatus(dto.getSpec(), dto.getUnit(),
                             isDuplicate);
 
+                    Set<ConstraintViolation<CreateCommonItemDocumentReqDto>> violations = validator.validate(dto);
+                    boolean hasMissingField = !violations.isEmpty();
+
+                    // 만약 보류 상태는 아닌데 빈칸이 있는 경우 (우선 순위 : 보류 상태 >>> 확인 필요)
+                    if (reviewStatus.equals(ReviewStatus.NEW) && hasMissingField) {
+                        reviewStatus = ReviewStatus.NEEDS_REVIEW;
+                    }
+
                     Item item = Item.CreateCommonItem(dto, savedFile, group, reviewStatus);
 
                     // 규격 및 단위 이슈 검사 후 수집
-                    collectIssuesIfNeeded(item, dto.getSpec(), dto.getUnit(), issueCollector);
+                    collectIssuesIfNeeded(item, dto.getSpec(), dto.getUnit(), issueCollector, hasMissingField);
 
                     return item;
                 }
@@ -73,6 +84,15 @@ public class ItemService {
                     ReviewStatus reviewStatus = determineReviewStatus(itemDto.getSpec(), itemDto.getUnit(),
                             isDuplicate);
 
+                    Set<ConstraintViolation<CreateManualItemDocumentReqDto>> violations = validator.validate(
+                            itemDto);
+                    boolean hasMissingField = !violations.isEmpty();
+
+                    // 만약 보류 상태는 아닌데 빈칸이 있는 경우 (우선 순위 : 보류 상태 >>> 확인 필요)
+                    if (reviewStatus.equals(ReviewStatus.NEW) && hasMissingField) {
+                        reviewStatus = ReviewStatus.NEEDS_REVIEW;
+                    }
+
                     Item item = Item.CreateManualItem(
                             itemDto,
                             savedFiles.get(i),
@@ -82,7 +102,7 @@ public class ItemService {
                     );
 
                     // 규격 및 단위 이슈 검사 후 수집
-                    collectIssuesIfNeeded(item, itemDto.getSpec(), itemDto.getUnit(), issueCollector);
+                    collectIssuesIfNeeded(item, itemDto.getSpec(), itemDto.getUnit(), issueCollector, hasMissingField);
 
                     return item;
                 }
@@ -97,12 +117,16 @@ public class ItemService {
     }
 
     // --- [ 이슈 수집 공통 헬퍼 메서드 ] ---
-    private void collectIssuesIfNeeded(Item item, String spec, String unit, Consumer<Issue> issueCollector) {
+    private void collectIssuesIfNeeded(Item item, String spec, String unit, Consumer<Issue> issueCollector,
+                                       boolean hasMissingField) {
         if (itemSpecAndUnitValidator.isSpecMismatch(spec)) {
             issueCollector.accept(Issue.create(IssueType.SPEC_MISMATCH, "규격 불일치", false, item));
         }
         if (itemSpecAndUnitValidator.isUnitMismatch(unit)) {
             issueCollector.accept(Issue.create(IssueType.UNIT_MISMATCH, "단위 불일치", false, item));
+        }
+        if (hasMissingField) {
+            issueCollector.accept(Issue.create(IssueType.MISSING_REQUIRED, "필수값 누락", false, item));
         }
     }
 
