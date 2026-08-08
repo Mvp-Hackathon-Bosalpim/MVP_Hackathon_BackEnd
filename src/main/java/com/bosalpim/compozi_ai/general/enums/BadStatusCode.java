@@ -18,6 +18,7 @@ public enum BadStatusCode {
     ITEM_LOADING_FAIL(HttpStatus.BAD_REQUEST, "해당 사전 데이터 로딩을 실패 했습니다."),
     ITEM_ALREADY_REJECTED(HttpStatus.BAD_REQUEST, "이미 반려된 항목입니다."),
     ALL_ITEMS_FAILED(HttpStatus.BAD_REQUEST, "요청한 모든 품목의 처리에 실패했습니다."),
+    INVALID_STATUS_FOR_RE_REVIEW(HttpStatus.BAD_REQUEST, "승인 또는 반려된 항목만 재검토할 수 있습니다."),
 
     //401 UNAUTHORIZED
 
