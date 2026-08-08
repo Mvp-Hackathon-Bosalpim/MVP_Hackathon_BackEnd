@@ -1,6 +1,7 @@
 package com.bosalpim.compozi_ai.domain.inbox.controller;
 
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.BulkIdsRequestDto;
+import com.bosalpim.compozi_ai.domain.inbox.dto.request.ItemSearchRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.MemoRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.BulkActionResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemActionResponseDto;
@@ -170,24 +171,20 @@ public class ItemInboxController {
     }
 
 
-    @Operation(summary = "품목 필터 검색", description = "품목명/공급사명/적용일 범위로 품목을 검색한다. 조건은 모두 선택적이다.")
+    @Operation(summary = "품목 필터 검색", description = "품목명/공급사명/적용일 범위로 품목을 검색한다. 조건은 모두 선택적이며, 품목명·공급사명은 다중 선택이 가능하다.")
     @ApiSuccess(message = "필터 검색 성공")
-    @GetMapping("/documents/search")
+    @PostMapping("/documents/search")
     public PageResponseDto<ItemListResponseDto> searchItems(
-            @Parameter(description = "정규화 품목명 (정확 일치)")
-            @RequestParam(required = false) String itemName,
-            @Parameter(description = "공급사명 (정확 일치)")
-            @RequestParam(required = false) String supplierName,
-            @Parameter(description = "적용일 시작 (yyyy-MM-dd)")
-            @RequestParam(required = false) LocalDate startDate,
-            @Parameter(description = "적용일 종료 (yyyy-MM-dd)")
-            @RequestParam(required = false) LocalDate endDate,
-            @Parameter(description = "페이지 번호 (0부터 시작)")
+            @RequestBody(required = false) ItemSearchRequestDto searchRequest,
             @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "페이지 크기")
             @RequestParam(defaultValue = "20") int size) {
 
+        List<String> itemNames = searchRequest != null ? searchRequest.getItemNames() : null;
+        List<String> supplierNames = searchRequest != null ? searchRequest.getSupplierNames() : null;
+        LocalDate startDate = searchRequest != null ? searchRequest.getStartDate() : null;
+        LocalDate endDate = searchRequest != null ? searchRequest.getEndDate() : null;
+
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
-        return inboxService.searchItems(itemName, supplierName, startDate, endDate, pageable);
+        return inboxService.searchItems(itemNames, supplierNames, startDate, endDate, pageable);
     }
 }
