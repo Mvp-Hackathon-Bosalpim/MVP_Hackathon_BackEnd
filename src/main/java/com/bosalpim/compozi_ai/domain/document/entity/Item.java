@@ -138,4 +138,8 @@ public class Item {
         this.reviewStatus = ReviewStatus.REJECTED;
     }
 
+    public void reReview() {
+        this.reviewStatus = ReviewStatus.NEW;
+    }
+
 }

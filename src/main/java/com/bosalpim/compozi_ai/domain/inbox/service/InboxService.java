@@ -4,6 +4,8 @@ import com.bosalpim.compozi_ai.domain.document.entity.Item;
 import com.bosalpim.compozi_ai.domain.document.enums.ReviewStatus;
 import com.bosalpim.compozi_ai.domain.document.repository.ItemRepository;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.BulkActionResponseDto;
+import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemListResponseDto;
+import com.bosalpim.compozi_ai.domain.inbox.dto.response.StatusCountResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.entity.ChangeLog;
 import com.bosalpim.compozi_ai.domain.inbox.entity.Issue;
 import com.bosalpim.compozi_ai.domain.inbox.enums.Action;
@@ -11,11 +13,14 @@ import com.bosalpim.compozi_ai.domain.inbox.repository.ChangeLogRepository;
 import com.bosalpim.compozi_ai.domain.inbox.repository.IssueRepository;
 import com.bosalpim.compozi_ai.general.enums.BadStatusCode;
 import com.bosalpim.compozi_ai.general.exception.CustomException;
+import com.bosalpim.compozi_ai.general.response.PageResponseDto;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -160,5 +165,73 @@ public class InboxService {
         return new BulkActionResponseDto(ids.size(), successIds.size(), failedList.size(), successIds, failedList);
     }
 
-    
+    @Transactional
+    public BulkActionResponseDto bulkReReview(List<Long> ids) {
+
+        List<Item> items = itemRepository.findAllById(ids);
+        Map<Long, Item> itemMap = items.stream()
+                .collect(Collectors.toMap(Item::getId, item -> item));
+
+        List<Long> successIds = new ArrayList<>();
+        List<BulkActionResponseDto.FailedItemDto> failedList = new ArrayList<>();
+        List<ChangeLog> logsToSave = new ArrayList<>();
+
+        for (Long id : ids) {
+            Item item = itemMap.get(id);
+            if (item == null) {
+                failedList.add(new BulkActionResponseDto.FailedItemDto(id, BadStatusCode.ITEM_NOT_FOUND));
+                continue;
+            }
+            if (item.getReviewStatus() != ReviewStatus.APPROVED
+                    && item.getReviewStatus() != ReviewStatus.REJECTED) {
+                failedList.add(new BulkActionResponseDto.FailedItemDto(id, BadStatusCode.INVALID_STATUS_FOR_RE_REVIEW));
+                continue;
+            }
+
+            item.reReview();
+            logsToSave.add(ChangeLog.of(item, Action.RE_REVIEW));
+            successIds.add(id);
+        }
+
+        if (successIds.isEmpty()) {
+            throw new CustomException(BadStatusCode.ALL_ITEMS_FAILED);
+        }
+
+        changeLogRepository.saveAll(logsToSave);
+
+        return new BulkActionResponseDto(ids.size(), successIds.size(), failedList.size(), successIds, failedList);
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponseDto<ItemListResponseDto> getItems(Pageable pageable) {
+        Page<Item> itemPage = itemRepository.findByDeletedAtIsNull(pageable);
+
+        List<Long> itemIds = itemPage.getContent().stream()
+                .map(Item::getId)
+                .toList();
+
+        List<Issue> issues = issueRepository.findByItemIdInAndResolvedFalse(itemIds);
+        Map<Long, List<String>> issueTypesByItemId = issues.stream()
+                .collect(Collectors.groupingBy(
+                        issue -> issue.getItem().getId(),
+                        Collectors.mapping(issue -> issue.getIssueType().name(), Collectors.toList())
+                ));
+
+        Page<ItemListResponseDto> page = itemPage.map(item ->
+                ItemListResponseDto.from(item, issueTypesByItemId.getOrDefault(item.getId(), List.of()))
+        );
+
+        return new PageResponseDto<>(page);
+    }
+
+    @Transactional(readOnly = true)
+    public StatusCountResponseDto getStatusCounts() {
+        long newCount = itemRepository.countByReviewStatusAndDeletedAtIsNull(ReviewStatus.NEW);
+        long needsReviewCount = itemRepository.countByReviewStatusAndDeletedAtIsNull(ReviewStatus.NEEDS_REVIEW);
+        long onHoldCount = itemRepository.countByReviewStatusAndDeletedAtIsNull(ReviewStatus.ON_HOLD);
+        long approvedCount = itemRepository.countByReviewStatusAndDeletedAtIsNull(ReviewStatus.APPROVED);
+        long rejectedCount = itemRepository.countByReviewStatusAndDeletedAtIsNull(ReviewStatus.REJECTED);
+
+        return new StatusCountResponseDto(newCount, needsReviewCount, onHoldCount, approvedCount, rejectedCount);
+    }
 }
