@@ -1,6 +1,8 @@
 package com.bosalpim.compozi_ai.domain.inbox.dto.response;
 
 import com.bosalpim.compozi_ai.domain.document.entity.Item;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -8,6 +10,7 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class ItemListResponseDto {
     private Long id;
     private String docId;
