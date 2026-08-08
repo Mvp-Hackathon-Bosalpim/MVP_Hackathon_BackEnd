@@ -42,6 +42,7 @@ public class FileService {
     }
 
 
+    @Transactional
     public CreateItemDocumentResDto createManualFile(CreateManualItemDocumentListReqDto reqDto) {
         List<File> files = reqDto.getItems().stream()
                 .map(req -> File.createFile(null, InputMethod.MANUAL))

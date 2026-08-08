@@ -47,4 +47,13 @@ public class Issue {
         this.resolved = resolved;
         this.item = item;
     }
+
+    public static Issue create(IssueType issueType, String detail, Boolean resolved, Item item) {
+        return Issue.builder()
+                .issueType(issueType)
+                .detail(detail)
+                .resolved(resolved)
+                .item(item)
+                .build();
+    }
 }

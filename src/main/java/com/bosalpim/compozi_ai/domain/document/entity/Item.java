@@ -92,7 +92,8 @@ public class Item {
         }
     }
 
-    public static Item CreateCommonItem(CreateCommonItemDocumentReqDto reqDto, File file, DuplicatedGroup group) {
+    public static Item CreateCommonItem(CreateCommonItemDocumentReqDto reqDto, File file, DuplicatedGroup group,
+                                        ReviewStatus reviewStatus) {
         return Item.builder()
                 .file(file)
                 .duplicatedGroup(group)
@@ -107,13 +108,13 @@ public class Item {
                 .priceBefore(reqDto.getPriceBefore())
                 .priceAfter(reqDto.getPriceAfter())
                 .effectiveDate(reqDto.getEffectiveDate())
-                .reviewStatus(ReviewStatus.NEW)
+                .reviewStatus(reviewStatus)
                 .build();
 
     }
 
     public static Item CreateManualItem(CreateManualItemDocumentReqDto reqDto, File file, String normalizedItemName,
-                                        DuplicatedGroup group) {
+                                        DuplicatedGroup group, ReviewStatus reviewStatus) {
         return Item.builder()
                 .file(file)
                 .duplicatedGroup(group)
@@ -126,7 +127,7 @@ public class Item {
                 .priceBefore(reqDto.getPriceBefore())
                 .priceAfter(reqDto.getPriceAfter())
                 .effectiveDate(reqDto.getEffectiveDate())
-                .reviewStatus(ReviewStatus.NEW)
+                .reviewStatus(reviewStatus)
                 .build();
     }
 
