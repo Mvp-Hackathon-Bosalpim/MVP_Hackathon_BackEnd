@@ -234,4 +234,15 @@ public class InboxService {
 
         return new StatusCountResponseDto(newCount, needsReviewCount, onHoldCount, approvedCount, rejectedCount);
     }
+
+    @Transactional(readOnly = true)
+    public List<String> getNormalizedItemNames() {
+        return itemRepository.findDistinctNormalizedItemNames();
+    }
+
+    @Transactional(readOnly = true)
+    public List<String> getSupplierNames() {
+        return itemRepository.findDistinctSupplierNames();
+    }
+
 }

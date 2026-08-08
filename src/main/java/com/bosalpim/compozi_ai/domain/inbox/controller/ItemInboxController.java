@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -145,5 +146,19 @@ public class ItemInboxController {
     @GetMapping("/documents/status-counts")
     public StatusCountResponseDto getStatusCounts() {
         return inboxService.getStatusCounts();
+    }
+
+    @Operation(summary = "품목명 목록 조회", description = "필터에 사용할 정규화 품목명 목록을 중복 없이 가나다순으로 조회한다.")
+    @ApiSuccess(message = "품목명 목록 조회 성공")
+    @GetMapping("/items/normalized-item-names")
+    public List<String> getNormalizedItemNames() {
+        return inboxService.getNormalizedItemNames();
+    }
+
+    @Operation(summary = "공급사명 목록 조회", description = "필터에 사용할 공급사명 목록을 중복 없이 가나다순으로 조회한다.")
+    @ApiSuccess(message = "공급사명 목록 조회 성공")
+    @GetMapping("/items/supplier-names")
+    public List<String> getSupplierNames() {
+        return inboxService.getSupplierNames();
     }
 }
