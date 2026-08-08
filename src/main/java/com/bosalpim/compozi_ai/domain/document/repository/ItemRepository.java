@@ -18,4 +18,7 @@ public interface ItemRepository extends JpaRepository<Item, Long>, ItemQueryRepo
 
     @Query("SELECT DISTINCT i.supplierName FROM Item i WHERE i.deletedAt IS NULL AND i.supplierName IS NOT NULL ORDER BY i.supplierName ASC")
     List<String> findDistinctSupplierNames();
+
+
+    List<Item> findAllByOrderByIdAsc();
 }
