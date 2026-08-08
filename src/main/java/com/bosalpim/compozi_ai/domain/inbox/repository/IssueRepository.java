@@ -8,4 +8,6 @@ public interface IssueRepository extends JpaRepository<Issue, Long> {
     boolean existsByItemIdAndResolvedFalse(Long itemId);
 
     List<Issue> findByItemIdInAndResolvedFalse(List<Long> itemIds);
+
+    List<Issue> findByItemIdAndResolvedFalse(Long itemId);
 }
