@@ -1,6 +1,7 @@
 package com.bosalpim.compozi_ai.domain.document.dto.response;
 
 import com.bosalpim.compozi_ai.domain.document.entity.Item;
+import com.bosalpim.compozi_ai.domain.document.enums.ReviewStatus;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import lombok.Builder;
@@ -19,12 +20,16 @@ public class CreateItemDocumentResDto {
 
 
     public static CreateItemDocumentResDto from(List<Item> items) {
+        int needChecked = (int) items.stream()
+                .filter(item -> item.getReviewStatus() == ReviewStatus.ON_HOLD
+                        || item.getReviewStatus() == ReviewStatus.NEEDS_REVIEW)
+                .count();
+
         return CreateItemDocumentResDto.builder()
                 .total(items.size())
-                .normal(1)
-                .needCheck(items.size() - 1)
+                .normal(items.size() - needChecked)
+                .needCheck(needChecked)
                 .build();
-        // TODO : 추후 데이터 유효성 검사 로직 구현 시 수정! (일단 하드코딩)
 
     }
 }
