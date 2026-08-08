@@ -4,8 +4,10 @@ import com.bosalpim.compozi_ai.domain.inbox.dto.request.BulkIdsRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.RejectRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.BulkActionResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemActionResponseDto;
+import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemListResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.service.InboxService;
 import com.bosalpim.compozi_ai.general.response.ApiSuccess;
+import com.bosalpim.compozi_ai.general.response.PageResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -13,6 +15,10 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -122,5 +128,14 @@ public class ItemInboxController {
     @PostMapping("/documents/bulk-re-review")
     public BulkActionResponseDto bulkReReview(@RequestBody BulkIdsRequestDto reqDto) {
         return inboxService.bulkReReview(reqDto.getIds());
+    }
+
+    @Operation(summary = "전체 품목 목록 조회", description = "삭제되지 않은 품목 전체를 페이지네이션하여 조회한다.")
+    @ApiSuccess(message = "전체 조회 성공")
+    @GetMapping("/documents")
+    public PageResponseDto<ItemListResponseDto> getItems(
+            @PageableDefault(page = 0, size = 20, sort = "id", direction = Sort.Direction.ASC)
+            Pageable pageable) {
+        return inboxService.getItems(pageable);
     }
 }

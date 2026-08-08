@@ -4,6 +4,7 @@ import com.bosalpim.compozi_ai.domain.document.entity.Item;
 import com.bosalpim.compozi_ai.domain.document.enums.ReviewStatus;
 import com.bosalpim.compozi_ai.domain.document.repository.ItemRepository;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.BulkActionResponseDto;
+import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemListResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.entity.ChangeLog;
 import com.bosalpim.compozi_ai.domain.inbox.entity.Issue;
 import com.bosalpim.compozi_ai.domain.inbox.enums.Action;
@@ -11,11 +12,14 @@ import com.bosalpim.compozi_ai.domain.inbox.repository.ChangeLogRepository;
 import com.bosalpim.compozi_ai.domain.inbox.repository.IssueRepository;
 import com.bosalpim.compozi_ai.general.enums.BadStatusCode;
 import com.bosalpim.compozi_ai.general.exception.CustomException;
+import com.bosalpim.compozi_ai.general.response.PageResponseDto;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -195,5 +199,12 @@ public class InboxService {
         changeLogRepository.saveAll(logsToSave);
 
         return new BulkActionResponseDto(ids.size(), successIds.size(), failedList.size(), successIds, failedList);
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponseDto<ItemListResponseDto> getItems(Pageable pageable) {
+        Page<ItemListResponseDto> page = itemRepository.findByDeletedAtIsNull(pageable)
+                .map(ItemListResponseDto::from);
+        return new PageResponseDto<>(page);
     }
 }
