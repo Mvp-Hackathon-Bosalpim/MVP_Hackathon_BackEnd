@@ -15,6 +15,8 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.time.LocalDate;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -24,6 +26,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Inbox API", description = "품목 검수(승인/반려) 관련 API")
@@ -145,5 +148,37 @@ public class ItemInboxController {
     @GetMapping("/documents/status-counts")
     public StatusCountResponseDto getStatusCounts() {
         return inboxService.getStatusCounts();
+    }
+
+    @Operation(summary = "품목명 목록 조회", description = "필터에 사용할 정규화 품목명 목록을 중복 없이 가나다순으로 조회한다.")
+    @ApiSuccess(message = "품목명 목록 조회 성공")
+    @GetMapping("/items/normalized-item-names")
+    public List<String> getNormalizedItemNames() {
+        return inboxService.getNormalizedItemNames();
+    }
+
+    @Operation(summary = "공급사명 목록 조회", description = "필터에 사용할 공급사명 목록을 중복 없이 가나다순으로 조회한다.")
+    @ApiSuccess(message = "공급사명 목록 조회 성공")
+    @GetMapping("/items/supplier-names")
+    public List<String> getSupplierNames() {
+        return inboxService.getSupplierNames();
+    }
+
+
+    @Operation(summary = "품목 필터 검색", description = "품목명/공급사명/적용일 범위로 품목을 검색한다. 조건은 모두 선택적이다.")
+    @ApiSuccess(message = "필터 검색 성공")
+    @GetMapping("/documents/search")
+    public PageResponseDto<ItemListResponseDto> searchItems(
+            @Parameter(description = "정규화 품목명 (정확 일치)")
+            @RequestParam(required = false) String itemName,
+            @Parameter(description = "공급사명 (정확 일치)")
+            @RequestParam(required = false) String supplierName,
+            @Parameter(description = "적용일 시작 (yyyy-MM-dd)")
+            @RequestParam(required = false) LocalDate startDate,
+            @Parameter(description = "적용일 종료 (yyyy-MM-dd)")
+            @RequestParam(required = false) LocalDate endDate,
+            @PageableDefault(page = 0, size = 20, sort = "id", direction = Sort.Direction.ASC)
+            Pageable pageable) {
+        return inboxService.searchItems(itemName, supplierName, startDate, endDate, pageable);
     }
 }
