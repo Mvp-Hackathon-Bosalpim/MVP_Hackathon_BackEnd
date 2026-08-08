@@ -5,6 +5,7 @@ import com.bosalpim.compozi_ai.domain.inbox.dto.request.RejectRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.BulkActionResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemActionResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemListResponseDto;
+import com.bosalpim.compozi_ai.domain.inbox.dto.response.StatusCountResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.service.InboxService;
 import com.bosalpim.compozi_ai.general.response.ApiSuccess;
 import com.bosalpim.compozi_ai.general.response.PageResponseDto;
@@ -137,5 +138,12 @@ public class ItemInboxController {
             @PageableDefault(page = 0, size = 20, sort = "id", direction = Sort.Direction.ASC)
             Pageable pageable) {
         return inboxService.getItems(pageable);
+    }
+
+    @Operation(summary = "품목 상태별 개수 조회", description = "review_status별 전체 품목 개수를 조회한다.")
+    @ApiSuccess(message = "상태별 개수 조회 성공")
+    @GetMapping("/documents/status-counts")
+    public StatusCountResponseDto getStatusCounts() {
+        return inboxService.getStatusCounts();
     }
 }
