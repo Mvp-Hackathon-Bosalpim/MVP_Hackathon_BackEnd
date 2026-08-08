@@ -150,6 +150,7 @@ class IssueServiceTest {
     @Test
     void 미해결_이슈_존재시_실패() {
         // given
+        Item normalItem = saveItem("DOC-205-2", ReviewStatus.NEW);
         Item item = saveItem("DOC-206", ReviewStatus.NEEDS_REVIEW);
         issueRepository.save(Issue.builder()
                 .item(item)
@@ -163,10 +164,11 @@ class IssueServiceTest {
                 .build());
 
         // when
-        BulkActionResponseDto result = inboxService.bulkApprove(List.of(item.getId()));
+        BulkActionResponseDto result = inboxService.bulkApprove(
+                List.of(normalItem.getId(), item.getId()));
 
         // then
-        assertThat(result.getSuccessCount()).isEqualTo(0);
+        assertThat(result.getSuccessCount()).isEqualTo(1);
         assertThat(result.getFailedCount()).isEqualTo(1);
 
         BulkActionResponseDto.FailedItemDto failed = result.getFailedList().get(0);
