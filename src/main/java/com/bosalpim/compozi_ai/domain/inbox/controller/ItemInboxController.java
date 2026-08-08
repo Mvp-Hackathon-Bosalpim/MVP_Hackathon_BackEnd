@@ -184,11 +184,6 @@ public class ItemInboxController {
         LocalDate startDate = searchRequest != null ? searchRequest.getStartDate() : null;
         LocalDate endDate = searchRequest != null ? searchRequest.getEndDate() : null;
 
-        System.out.println("itemNames = " + itemNames);
-        System.out.println("supplierNames = " + supplierNames);
-        System.out.println("startDate = " + startDate);
-        System.out.println("endDate = " + endDate);
-
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
         return inboxService.searchItems(itemNames, supplierNames, startDate, endDate, pageable);
     }
