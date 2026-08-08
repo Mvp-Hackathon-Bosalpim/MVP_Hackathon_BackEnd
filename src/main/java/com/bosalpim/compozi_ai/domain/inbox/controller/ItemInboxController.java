@@ -18,9 +18,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -138,8 +138,12 @@ public class ItemInboxController {
     @ApiSuccess(message = "전체 조회 성공")
     @GetMapping("/documents")
     public PageResponseDto<ItemListResponseDto> getItems(
-            @PageableDefault(page = 0, size = 20, sort = "id", direction = Sort.Direction.ASC)
-            Pageable pageable) {
+            @Parameter(description = "페이지 번호 (0부터 시작)")
+            @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기")
+            @RequestParam(defaultValue = "20") int size) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
         return inboxService.getItems(pageable);
     }
 
@@ -177,8 +181,12 @@ public class ItemInboxController {
             @RequestParam(required = false) LocalDate startDate,
             @Parameter(description = "적용일 종료 (yyyy-MM-dd)")
             @RequestParam(required = false) LocalDate endDate,
-            @PageableDefault(page = 0, size = 20, sort = "id", direction = Sort.Direction.ASC)
-            Pageable pageable) {
+            @Parameter(description = "페이지 번호 (0부터 시작)")
+            @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기")
+            @RequestParam(defaultValue = "20") int size) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
         return inboxService.searchItems(itemName, supplierName, startDate, endDate, pageable);
     }
 }
