@@ -1,7 +1,8 @@
 package com.bosalpim.compozi_ai.domain.inbox.controller;
 
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.BulkIdsRequestDto;
-import com.bosalpim.compozi_ai.domain.inbox.dto.request.RejectRequestDto;
+import com.bosalpim.compozi_ai.domain.inbox.dto.request.ItemSearchRequestDto;
+import com.bosalpim.compozi_ai.domain.inbox.dto.request.MemoRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.BulkActionResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemActionResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemDetailResponseDto;
@@ -19,9 +20,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -55,8 +56,10 @@ public class ItemInboxController {
     @PostMapping("/documents/{id}/approve")
     public ItemActionResponseDto approve(
             @Parameter(description = "품목 ID", required = true)
-            @PathVariable long id) {
-        Long approveId = inboxService.approve(id);
+            @PathVariable long id,
+            @RequestBody(required = false) MemoRequestDto reqDto) {
+        String memo = (reqDto != null) ? reqDto.getMemo() : null;
+        Long approveId = inboxService.approve(id, memo);
         return new ItemActionResponseDto(approveId);
     }
 
@@ -85,9 +88,9 @@ public class ItemInboxController {
     public ItemActionResponseDto reject(
             @Parameter(description = "품목 ID", required = true)
             @PathVariable long id,
-            @RequestBody RejectRequestDto reqDto) {
-
-        Long rejectId = inboxService.reject(id, reqDto.getMemo());
+            @RequestBody(required = false) MemoRequestDto reqDto) {
+        String memo = (reqDto != null) ? reqDto.getMemo() : null;
+        Long rejectId = inboxService.reject(id, memo);
         return new ItemActionResponseDto(rejectId);
 
     }
@@ -105,9 +108,8 @@ public class ItemInboxController {
             )))
     @PostMapping("/documents/bulk-approve")
     public BulkActionResponseDto bulkApprove(@RequestBody BulkIdsRequestDto reqDto) {
-        return inboxService.bulkApprove(reqDto.getIds());
+        return inboxService.bulkApprove(reqDto.getIds(), reqDto.getMemo());
     }
-
 
     @Operation(summary = "여러 품목 일괄 반려", description = "요청받은 id 목록 중 반려 가능한 품목만 반려 처리하고, 실패한 항목은 사유와 함께 반환한다.")
     @ApiSuccess(message = "요청한 품목이 모두 성공적으로 반려되었습니다.")
@@ -119,7 +121,7 @@ public class ItemInboxController {
             )))
     @PostMapping("/documents/bulk-reject")
     public BulkActionResponseDto bulkReject(@RequestBody BulkIdsRequestDto reqDto) {
-        return inboxService.bulkReject(reqDto.getIds());
+        return inboxService.bulkReject(reqDto.getIds(), reqDto.getMemo());
     }
 
     @Operation(summary = "여러 품목 일괄 재검토", description = "승인 또는 반려된 품목들을 다시 검토 대기(새 항목) 상태로 되돌린다.")
@@ -132,15 +134,19 @@ public class ItemInboxController {
             )))
     @PostMapping("/documents/bulk-re-review")
     public BulkActionResponseDto bulkReReview(@RequestBody BulkIdsRequestDto reqDto) {
-        return inboxService.bulkReReview(reqDto.getIds());
+        return inboxService.bulkReReview(reqDto.getIds(), reqDto.getMemo());
     }
 
     @Operation(summary = "전체 품목 목록 조회", description = "삭제되지 않은 품목 전체를 페이지네이션하여 조회한다.")
     @ApiSuccess(message = "전체 조회 성공")
     @GetMapping("/documents")
     public PageResponseDto<ItemListResponseDto> getItems(
-            @PageableDefault(page = 0, size = 20, sort = "id", direction = Sort.Direction.ASC)
-            Pageable pageable) {
+            @Parameter(description = "페이지 번호 (0부터 시작)")
+            @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기")
+            @RequestParam(defaultValue = "20") int size) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
         return inboxService.getItems(pageable);
     }
 
@@ -166,21 +172,21 @@ public class ItemInboxController {
     }
 
 
-    @Operation(summary = "품목 필터 검색", description = "품목명/공급사명/적용일 범위로 품목을 검색한다. 조건은 모두 선택적이다.")
+    @Operation(summary = "품목 필터 검색", description = "품목명/공급사명/적용일 범위로 품목을 검색한다. 조건은 모두 선택적이며, 품목명·공급사명은 다중 선택이 가능하다.")
     @ApiSuccess(message = "필터 검색 성공")
-    @GetMapping("/documents/search")
+    @PostMapping("/documents/search")
     public PageResponseDto<ItemListResponseDto> searchItems(
-            @Parameter(description = "정규화 품목명 (정확 일치)")
-            @RequestParam(required = false) String itemName,
-            @Parameter(description = "공급사명 (정확 일치)")
-            @RequestParam(required = false) String supplierName,
-            @Parameter(description = "적용일 시작 (yyyy-MM-dd)")
-            @RequestParam(required = false) LocalDate startDate,
-            @Parameter(description = "적용일 종료 (yyyy-MM-dd)")
-            @RequestParam(required = false) LocalDate endDate,
-            @PageableDefault(page = 0, size = 20, sort = "id", direction = Sort.Direction.ASC)
-            Pageable pageable) {
-        return inboxService.searchItems(itemName, supplierName, startDate, endDate, pageable);
+            @RequestBody(required = false) ItemSearchRequestDto searchRequest,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+
+        List<String> itemNames = searchRequest != null ? searchRequest.getItemNames() : null;
+        List<String> supplierNames = searchRequest != null ? searchRequest.getSupplierNames() : null;
+        LocalDate startDate = searchRequest != null ? searchRequest.getStartDate() : null;
+        LocalDate endDate = searchRequest != null ? searchRequest.getEndDate() : null;
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
+        return inboxService.searchItems(itemNames, supplierNames, startDate, endDate, pageable);
     }
 
     @Operation(summary = "품목 단건 조회", description = "품목 (item) id 를 기반으로 구매 품목을 단건 조회한다.")

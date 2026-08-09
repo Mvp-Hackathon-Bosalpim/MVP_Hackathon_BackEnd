@@ -1,12 +1,15 @@
 package com.bosalpim.compozi_ai.domain.inbox.dto.response;
 
 import com.bosalpim.compozi_ai.general.enums.BadStatusCode;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
 @AllArgsConstructor
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class BulkActionResponseDto {
     private int requestedCount;
     private int successCount;
