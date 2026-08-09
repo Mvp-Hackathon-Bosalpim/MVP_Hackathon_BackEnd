@@ -63,10 +63,17 @@ public class InboxService {
             throw new CustomException(BadStatusCode.ITEM_ALREADY_APPROVED);
         }
 
-        boolean isUnresolvedIssue = issueRepository.existsByItemIdAndResolvedFalse(item.getId());
+        List<Issue> unresolvedIssues = issueRepository.findByItemAndResolved(item, false);
 
-        if (isUnresolvedIssue) {
+        boolean hasMissingRequired = unresolvedIssues.stream()
+                .anyMatch(issue -> issue.getIssueType() == IssueType.MISSING_REQUIRED);
+        if (hasMissingRequired) {
             throw new CustomException(BadStatusCode.UNRESOLVED_ISSUE_EXISTS);
+        }
+
+        boolean hasOtherUnresolvedIssue = !unresolvedIssues.isEmpty();
+        if (hasOtherUnresolvedIssue && (memo == null || memo.isBlank())) {
+            throw new CustomException(BadStatusCode.APPROVAL_MEMO_REQUIRED);
         }
 
         item.approve();
@@ -95,26 +102,24 @@ public class InboxService {
 
     @Transactional
     public BulkActionResponseDto bulkApprove(List<Long> ids, String memo) {
-
-        // Item들을 한 번의 쿼리로 다 가져옴 (쿼리1)
+        // 쿼리1: id 목록으로 Item 일괄 조회
         List<Item> items = itemRepository.findAllById(ids);
         Map<Long, Item> itemMap = items.stream()
                 .collect(Collectors.toMap(Item::getId, item -> item));
 
         List<Long> itemIds = new ArrayList<>(itemMap.keySet());
 
-        // 쿼리 2
+        // 쿼리2: 대상 Item들의 미해결 이슈 일괄 조회
         List<Issue> unresolvedIssues = issueRepository.findByItemIdInAndResolvedFalse(itemIds);
 
-        Map<Long, List<String>> issueTypesByItemId = unresolvedIssues.stream()
-                .collect(Collectors.groupingBy(
-                        issue -> issue.getItem().getId(),
-                        Collectors.mapping(issue -> issue.getIssueType().name(), Collectors.toList())
-                ));
+        Map<Long, List<Issue>> unresolvedIssuesByItemId = unresolvedIssues.stream()
+                .collect(Collectors.groupingBy(issue -> issue.getItem().getId()));
 
         List<Long> successIds = new ArrayList<>();
         List<BulkActionResponseDto.FailedItemDto> failedList = new ArrayList<>();
         List<ChangeLog> logsToSave = new ArrayList<>();
+
+        boolean memoProvided = memo != null && !memo.isBlank();
 
         for (Long id : ids) {
             Item item = itemMap.get(id);
@@ -127,9 +132,23 @@ public class InboxService {
                 failedList.add(new BulkActionResponseDto.FailedItemDto(id, BadStatusCode.ITEM_ALREADY_APPROVED));
                 continue;
             }
-            if (issueTypesByItemId.containsKey(id)) {
+
+            List<Issue> itemIssues = unresolvedIssuesByItemId.getOrDefault(id, List.of());
+
+            boolean hasMissingRequired = itemIssues.stream()
+                    .anyMatch(issue -> issue.getIssueType() == IssueType.MISSING_REQUIRED);
+            if (hasMissingRequired) {
                 failedList.add(new BulkActionResponseDto.FailedItemDto(
-                        id, BadStatusCode.UNRESOLVED_ISSUE_EXISTS, issueTypesByItemId.get(id)));
+                        id, BadStatusCode.UNRESOLVED_ISSUE_EXISTS,
+                        itemIssues.stream().map(issue -> issue.getIssueType().name()).toList()));
+                continue;
+            }
+
+            boolean hasOtherUnresolvedIssue = !itemIssues.isEmpty();
+            if (hasOtherUnresolvedIssue && !memoProvided) {
+                failedList.add(new BulkActionResponseDto.FailedItemDto(
+                        id, BadStatusCode.APPROVAL_MEMO_REQUIRED,
+                        itemIssues.stream().map(issue -> issue.getIssueType().name()).toList()));
                 continue;
             }
 
@@ -141,9 +160,10 @@ public class InboxService {
         if (successIds.isEmpty()) {
             throw new CustomException(BadStatusCode.ALL_ITEMS_FAILED);
         }
-        //쿼리3
+
+        // 쿼리3,4: 승인 성공 항목들의 ChangeLog 일괄 저장
+        // (item.approve()로 인한 UPDATE는 dirty checking으로 트랜잭션 커밋 시 별도 발생)
         changeLogRepository.saveAll(logsToSave);
-        // 쿼리4
         return new BulkActionResponseDto(ids.size(), successIds.size(), failedList.size(), successIds, failedList);
     }
 
