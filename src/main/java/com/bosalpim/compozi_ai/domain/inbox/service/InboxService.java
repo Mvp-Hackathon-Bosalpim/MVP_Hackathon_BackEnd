@@ -6,6 +6,8 @@ import com.bosalpim.compozi_ai.domain.document.entity.Item;
 import com.bosalpim.compozi_ai.domain.document.enums.ReviewStatus;
 import com.bosalpim.compozi_ai.domain.document.repository.ItemRepository;
 import com.bosalpim.compozi_ai.domain.document.service.ItemService;
+import com.bosalpim.compozi_ai.domain.inbox.dto.request.ChangeLogCreateDto;
+import com.bosalpim.compozi_ai.domain.inbox.dto.request.ItemSnapshotDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.ItemUpdateRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.BulkActionResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemDetailResponseDto;
@@ -311,6 +313,8 @@ public class InboxService {
         Item item = itemRepository.findById(id).
                 orElseThrow(() -> new CustomException(BadStatusCode.ITEM_NOT_FOUND));
 
+        ItemSnapshotDto beforeItem = ItemSnapshotDto.create(item);
+
         item.updateItem(reqDto);
 
         List<Item> otherItems = itemRepository.findAllByOrderByIdAsc().stream()
@@ -358,6 +362,12 @@ public class InboxService {
         item.updateReviewStatus(reviewStatus);
 
         updateItemIssues(item, isDuplicate, hasMissingField);
+
+        List<ChangeLogCreateDto> createDtos = ChangeLogCreateDto.createList(beforeItem, item);
+        List<ChangeLog> changeLogs = createDtos.stream()
+                .map(dto -> ChangeLog.of(item, Action.EDIT, dto))
+                .toList();
+        changeLogRepository.saveAll(changeLogs);
 
         return null;
     }

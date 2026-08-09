@@ -1,6 +1,7 @@
 package com.bosalpim.compozi_ai.domain.inbox.entity;
 
 import com.bosalpim.compozi_ai.domain.document.entity.Item;
+import com.bosalpim.compozi_ai.domain.inbox.dto.request.ChangeLogCreateDto;
 import com.bosalpim.compozi_ai.domain.inbox.enums.Action;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -72,6 +73,17 @@ public class ChangeLog {
                 .item(item)
                 .action(action)
                 .memo(memo)
+                .at(LocalDateTime.now())
+                .build();
+    }
+
+    public static ChangeLog of(Item item, Action action, ChangeLogCreateDto dto) {
+        return ChangeLog.builder()
+                .fieldName(dto.getFieldName())
+                .fromValue(dto.getFromValue())
+                .toValue(dto.getToValue())
+                .item(item)
+                .action(action)
                 .at(LocalDateTime.now())
                 .build();
     }
