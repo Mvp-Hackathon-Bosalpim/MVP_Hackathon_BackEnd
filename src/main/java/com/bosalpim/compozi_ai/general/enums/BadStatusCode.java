@@ -22,7 +22,8 @@ public enum BadStatusCode {
     EXPORT_NO_APPROVED_ITEMS(HttpStatus.BAD_REQUEST, "내보낼 승인 완료 항목이 없습니다."),
     EXPORT_FILE_NAME_REQUIRED(HttpStatus.BAD_REQUEST, "파일명을 입력해야 합니다."),
     EXPORT_S3_KEY_NOT_FOUND(HttpStatus.BAD_REQUEST, "다운로드할 파일이 존재하지 않습니다. 내보내기가 실패한 이력입니다."),
-    
+    APPROVAL_MEMO_REQUIRED(HttpStatus.BAD_REQUEST, "예외가 남아있는 상태로 승인하려면 승인 사유(메모)를 입력해야 합니다."),
+
     //401 UNAUTHORIZED
 
     //403 FORBIDDEN
