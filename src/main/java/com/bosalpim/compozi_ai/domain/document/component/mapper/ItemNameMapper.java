@@ -2,7 +2,6 @@ package com.bosalpim.compozi_ai.domain.document.component.mapper;
 
 import com.bosalpim.compozi_ai.domain.document.component.mapper.dictionary.ItemDictionary;
 import com.bosalpim.compozi_ai.domain.document.component.mapper.rule.ItemNormalizationRule;
-import com.bosalpim.compozi_ai.domain.document.service.GeminiNormalizationService;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -13,8 +12,6 @@ import org.springframework.stereotype.Component;
 public class ItemNameMapper {
     private final ItemDictionary itemDictionary;
     private final List<ItemNormalizationRule> rules;
-    private final GeminiNormalizationService aiService;
-
 
     public String map(String rawName) {
 
@@ -32,13 +29,13 @@ public class ItemNameMapper {
         for (ItemNormalizationRule rule : rules) {
             normalized = rule.apply(normalized);
         }
-
-        if (rawName.equals(normalized)) {
-            Optional<String> aiResult = aiService.normalizeWithAi(rawName);
-            if (aiResult.isPresent() && !aiResult.get().isBlank()) {
-                return aiResult.get(); // AI 정규화 결과 사용
-            }
-        }
+// @Deprecated
+//        if (rawName.equals(normalized)) {
+//            Optional<String> aiResult = aiService.normalizeWithAi(rawName);
+//            if (aiResult.isPresent() && !aiResult.get().isBlank()) {
+//                return aiResult.get(); // AI 정규화 결과 사용
+//            }
+//        }
 
         if (rawName.equals(normalized)) {
             return "데이터 부족";
