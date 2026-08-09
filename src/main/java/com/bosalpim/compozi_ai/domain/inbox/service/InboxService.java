@@ -378,6 +378,7 @@ public class InboxService {
 
                 if (remainingItemsInGroup.size() == 1) {
                     Item lonelyItem = remainingItemsInGroup.get(0);
+                    lonelyItem.updateReviewStatus(ReviewStatus.NEW);
                     lonelyItem.updateDuplicatedGroup(null);
 
                     issueRepository.findByItemAndResolved(lonelyItem, false).stream()
