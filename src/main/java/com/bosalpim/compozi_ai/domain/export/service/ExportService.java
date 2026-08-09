@@ -192,6 +192,11 @@ public class ExportService {
         List<ChangeLog> logs = data.changeLogsOf(item.getId());
         String exceptionFlags = String.join(";", extractExceptionFlags(item.getId(), data));
 
+        List<ChangeLog> edits = logs.stream()
+                .filter(log -> log.getAction() == Action.EDIT)
+                .sorted(Comparator.comparing(ChangeLog::getAt))
+                .toList();
+
         return new ExportItemCsvResponseDto(
                 item.getDocId(),
                 item.getSourceType().name(),
@@ -209,8 +214,19 @@ public class ExportService {
                 item.getFile().getFileName(),
                 item.getRowNo(),
                 extractReviewedAt(logs),
-                extractReviewMemo(logs)
+                extractReviewMemo(logs),
+                joinEditField(edits, log -> log.getAt().toString()),
+                joinEditField(edits, ChangeLog::getFieldName),
+                joinEditField(edits, ChangeLog::getFromValue),
+                joinEditField(edits, ChangeLog::getToValue),
+                joinEditField(edits, log -> log.getAction().name())
         );
+    }
+
+    private String joinEditField(List<ChangeLog> edits, java.util.function.Function<ChangeLog, String> extractor) {
+        return edits.stream()
+                .map(extractor)
+                .collect(java.util.stream.Collectors.joining(";"));
     }
 
     private byte[] writeCsv(List<ExportItemCsvResponseDto> items) throws IOException {
@@ -221,7 +237,8 @@ public class ExportService {
                     "doc_id", "source_type", "supplier_name", "raw_item_name", "normalized_item_name",
                     "spec", "unit", "price_before", "price_after", "effective_date", "review_status",
                     "exception_flags", "source_input_method", "source_file_name", "source_row_no",
-                    "reviewed_at", "review_memo"
+                    "reviewed_at", "review_memo",
+                    "change_log_at", "change_log_field", "change_log_from", "change_log_to", "change_log_action"
             };
             csvWriter.writeNext(header);
 
@@ -236,14 +253,19 @@ public class ExportService {
                         dto.getUnit(),
                         String.valueOf(dto.getPriceBefore()),
                         String.valueOf(dto.getPriceAfter()),
-                        String.valueOf(dto.getEffectiveDate()),
+                        dto.getEffectiveDate() != null ? dto.getEffectiveDate().toString() : "",
                         dto.getReviewStatus(),
                         dto.getExceptionFlags(),
                         dto.getSourceInputMethod(),
                         dto.getSourceFileName(),
                         dto.getSourceRowNo() != null ? String.valueOf(dto.getSourceRowNo()) : "",
                         dto.getReviewedAt() != null ? dto.getReviewedAt().toString() : "",
-                        dto.getReviewMemo()
+                        dto.getReviewMemo(),
+                        dto.getChangeLogAt(),
+                        dto.getChangeLogField(),
+                        dto.getChangeLogFrom(),
+                        dto.getChangeLogTo(),
+                        dto.getChangeLogAction()
                 };
                 csvWriter.writeNext(row);
             }

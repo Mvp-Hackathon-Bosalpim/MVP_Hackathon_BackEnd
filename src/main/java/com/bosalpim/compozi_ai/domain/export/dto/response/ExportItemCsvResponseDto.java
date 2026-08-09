@@ -4,14 +4,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 
 @Data
 @AllArgsConstructor
-@NoArgsConstructor
 public class ExportItemCsvResponseDto {
-
     private String docId;
     private String sourceType;
     private String supplierName;
@@ -29,4 +26,9 @@ public class ExportItemCsvResponseDto {
     private Long sourceRowNo;
     private LocalDateTime reviewedAt;
     private String reviewMemo;
+    private String changeLogAt;
+    private String changeLogField;
+    private String changeLogFrom;
+    private String changeLogTo;
+    private String changeLogAction;
 }
