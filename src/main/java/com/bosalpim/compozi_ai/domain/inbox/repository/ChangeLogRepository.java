@@ -6,4 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ChangeLogRepository extends JpaRepository<ChangeLog, Long> {
     List<ChangeLog> findAllByItemId(Long itemId);
+
+    List<ChangeLog> findAllByItemIdIn(List<Long> itemIds);
 }
