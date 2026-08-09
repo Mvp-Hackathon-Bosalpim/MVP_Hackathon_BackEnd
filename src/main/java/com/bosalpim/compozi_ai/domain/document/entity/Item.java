@@ -143,4 +143,7 @@ public class Item {
         this.reviewStatus = ReviewStatus.NEW;
     }
 
+    public void updateDuplicatedGroup(DuplicatedGroup newGroup) {
+        this.duplicatedGroup = newGroup;
+    }
 }
