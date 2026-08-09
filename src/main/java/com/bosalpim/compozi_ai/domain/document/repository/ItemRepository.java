@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface ItemRepository extends JpaRepository<Item, Long>, ItemQueryRepository {
     Page<Item> findByDeletedAtIsNull(Pageable pageable);
@@ -19,8 +20,10 @@ public interface ItemRepository extends JpaRepository<Item, Long>, ItemQueryRepo
     @Query("SELECT DISTINCT i.supplierName FROM Item i WHERE i.deletedAt IS NULL AND i.supplierName IS NOT NULL ORDER BY i.supplierName ASC")
     List<String> findDistinctSupplierNames();
 
-
     List<Item> findAllByOrderByIdAsc();
 
     List<Item> findByFileIdOrderByIdAsc(Long id);
+
+    @Query("SELECT i FROM Item i JOIN FETCH i.file WHERE i.reviewStatus = :reviewStatus AND i.deletedAt IS NULL")
+    List<Item> findAllByReviewStatusWithFile(@Param("reviewStatus") ReviewStatus reviewStatus);
 }
