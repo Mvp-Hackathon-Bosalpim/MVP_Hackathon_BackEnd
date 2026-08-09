@@ -18,15 +18,15 @@ public class ItemRepositoryImpl implements ItemQueryRepository {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Page<Item> searchItems(String itemName, String supplierName, LocalDate startDate, LocalDate endDate,
-                                  Pageable pageable) {
+    public Page<Item> searchItems(List<String> itemNames, List<String> supplierNames, LocalDate startDate,
+                                  LocalDate endDate, Pageable pageable) {
 
         List<Item> content = queryFactory
                 .selectFrom(item)
                 .where(
                         item.deletedAt.isNull(),
-                        itemNameEq(itemName),
-                        supplierNameEq(supplierName),
+                        itemNameIn(itemNames),
+                        supplierNameIn(supplierNames),
                         effectiveDateBetween(startDate, endDate)
                 )
                 .offset(pageable.getOffset())
@@ -39,8 +39,8 @@ public class ItemRepositoryImpl implements ItemQueryRepository {
                 .from(item)
                 .where(
                         item.deletedAt.isNull(),
-                        itemNameEq(itemName),
-                        supplierNameEq(supplierName),
+                        itemNameIn(itemNames),
+                        supplierNameIn(supplierNames),
                         effectiveDateBetween(startDate, endDate)
                 )
                 .fetchOne();
@@ -48,12 +48,12 @@ public class ItemRepositoryImpl implements ItemQueryRepository {
         return new PageImpl<>(content, pageable, total != null ? total : 0);
     }
 
-    private BooleanExpression itemNameEq(String itemName) {
-        return (itemName == null || itemName.isBlank()) ? null : item.normalizedItemName.eq(itemName);
+    private BooleanExpression itemNameIn(List<String> itemNames) {
+        return (itemNames == null || itemNames.isEmpty()) ? null : item.normalizedItemName.in(itemNames);
     }
 
-    private BooleanExpression supplierNameEq(String supplierName) {
-        return (supplierName == null || supplierName.isBlank()) ? null : item.supplierName.eq(supplierName);
+    private BooleanExpression supplierNameIn(List<String> supplierNames) {
+        return (supplierNames == null || supplierNames.isEmpty()) ? null : item.supplierName.in(supplierNames);
     }
 
     private BooleanExpression effectiveDateBetween(LocalDate startDate, LocalDate endDate) {

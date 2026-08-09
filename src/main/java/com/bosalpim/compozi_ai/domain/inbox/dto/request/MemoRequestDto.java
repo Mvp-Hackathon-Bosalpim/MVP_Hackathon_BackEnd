@@ -5,6 +5,6 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class RejectRequestDto {
+public class MemoRequestDto {
     String memo;
 }

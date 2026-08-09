@@ -33,7 +33,7 @@ public class InboxService {
     private final ChangeLogRepository changeLogRepository;
 
     @Transactional
-    public Long approve(Long id) {
+    public Long approve(Long id, String memo) {
         Item item = itemRepository.findById(id)
                 .orElseThrow(() -> new CustomException(BadStatusCode.ITEM_NOT_FOUND));
 
@@ -48,7 +48,7 @@ public class InboxService {
         }
 
         item.approve();
-        changeLogRepository.save(ChangeLog.of(item, Action.APPROVE));
+        changeLogRepository.save(ChangeLog.of(item, Action.APPROVE, memo));
 
         return item.getId();
     }
@@ -72,7 +72,7 @@ public class InboxService {
     }
 
     @Transactional
-    public BulkActionResponseDto bulkApprove(List<Long> ids) {
+    public BulkActionResponseDto bulkApprove(List<Long> ids, String memo) {
 
         // Item들을 한 번의 쿼리로 다 가져옴 (쿼리1)
         List<Item> items = itemRepository.findAllById(ids);
@@ -112,7 +112,7 @@ public class InboxService {
             }
 
             item.approve();
-            logsToSave.add(ChangeLog.of(item, Action.APPROVE));
+            logsToSave.add(ChangeLog.of(item, Action.APPROVE, memo));
             successIds.add(id);
         }
 
@@ -126,7 +126,7 @@ public class InboxService {
     }
 
     @Transactional
-    public BulkActionResponseDto bulkReject(List<Long> ids) {
+    public BulkActionResponseDto bulkReject(List<Long> ids, String memo) {
 
         List<Item> items = itemRepository.findAllById(ids);
         Map<Long, Item> itemMap = items.stream()
@@ -153,7 +153,7 @@ public class InboxService {
             }
 
             item.reject();
-            logsToSave.add(ChangeLog.of(item, Action.REJECT));
+            logsToSave.add(ChangeLog.of(item, Action.REJECT, memo));
             successIds.add(id);
         }
 
@@ -167,7 +167,7 @@ public class InboxService {
     }
 
     @Transactional
-    public BulkActionResponseDto bulkReReview(List<Long> ids) {
+    public BulkActionResponseDto bulkReReview(List<Long> ids, String memo) {
 
         List<Item> items = itemRepository.findAllById(ids);
         Map<Long, Item> itemMap = items.stream()
@@ -190,7 +190,7 @@ public class InboxService {
             }
 
             item.reReview();
-            logsToSave.add(ChangeLog.of(item, Action.RE_REVIEW));
+            logsToSave.add(ChangeLog.of(item, Action.RE_REVIEW, memo));
             successIds.add(id);
         }
 
@@ -248,27 +248,22 @@ public class InboxService {
 
     @Transactional(readOnly = true)
     public PageResponseDto<ItemListResponseDto> searchItems(
-            String itemName, String supplierName, LocalDate startDate, LocalDate endDate, Pageable pageable) {
+            List<String> itemNames, List<String> supplierNames, LocalDate startDate, LocalDate endDate,
+            Pageable pageable) {
 
-        // 1. QueryDSL 필터로 걸러진 Item들을 페이지로 꺼냄
-        Page<Item> itemPage = itemRepository.searchItems(itemName, supplierName, startDate, endDate, pageable);
+        Page<Item> itemPage = itemRepository.searchItems(itemNames, supplierNames, startDate, endDate, pageable);
 
-        // 2. 그 Item들의 id만 뽑음
         List<Long> itemIds = itemPage.getContent().stream()
                 .map(Item::getId)
                 .toList();
 
-        // 3. 그 id들에 걸린 미해결 이슈를 한 번에 조회
         List<Issue> issues = issueRepository.findByItemIdInAndResolvedFalse(itemIds);
-
-        // 4. Item id별로 issueType 묶음
         Map<Long, List<String>> issueTypesByItemId = issues.stream()
                 .collect(Collectors.groupingBy(
                         issue -> issue.getItem().getId(),
                         Collectors.mapping(issue -> issue.getIssueType().name(), Collectors.toList())
                 ));
 
-        // 5. 걸러진 Item마다, ItemListResponseDto.from()으로 규격에 맞춰 변환
         Page<ItemListResponseDto> page = itemPage.map(item ->
                 ItemListResponseDto.from(item, issueTypesByItemId.getOrDefault(item.getId(), List.of()))
         );
