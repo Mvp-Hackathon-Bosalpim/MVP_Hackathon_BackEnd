@@ -239,4 +239,17 @@ public class ItemInboxController {
         return inboxService.deleteBulkItem(bulkItemDeleteRequestDto);
     }
 
+    @Operation(summary = "특정 중복 그룹 조회", description = "중복 그룹 id 를 기반으로 중복 요소를 조회한다.")
+    @ApiSuccess(message = "중복 품목 조회 성공")
+    @GetMapping("/documents/duplicate/{id}")
+    public PageResponseDto<ItemListResponseDto> searchDuplicatedItems(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @Parameter(description = "중복 그룹 아이디 제공 시 해당 group_id 기반 중복 아이템 조회", required = true)
+            @PathVariable Long id
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
+        return inboxService.searchItemsWithDuplicatedGroupId(id, pageable);
+    }
+
 }
