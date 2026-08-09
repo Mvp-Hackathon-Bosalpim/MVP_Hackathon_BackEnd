@@ -1,6 +1,7 @@
 package com.bosalpim.compozi_ai.domain.export.controller;
 
 import com.bosalpim.compozi_ai.domain.export.dto.request.ExportRequestDto;
+import com.bosalpim.compozi_ai.domain.export.dto.response.DownloadUrlResponseDto;
 import com.bosalpim.compozi_ai.domain.export.dto.response.ExportHistoryResponseDto;
 import com.bosalpim.compozi_ai.domain.export.entity.ExportHistory;
 import com.bosalpim.compozi_ai.domain.export.service.ExportService;
@@ -57,16 +58,11 @@ public class ExportController {
             content = @Content(examples = @ExampleObject(
                     value = "{ \"status\": \"FAIL\", \"code\": 404, \"message\": \"존재하지 않는 내보내기 이력입니다.\", \"data\": null }"
             )))
-    @ApiResponse(
-            responseCode = "400",
-            description = "내보내기가 실패한 이력이라 다운로드할 파일이 없는 경우",
-            content = @Content(examples = @ExampleObject(
-                    value = "{ \"status\": \"FAIL\", \"code\": 400, \"message\": \"다운로드할 파일이 존재하지 않습니다. 내보내기가 실패한 이력입니다.\", \"data\": null }"
-            )))
     @GetMapping("/{exportHistoryId}/download-url")
-    public String getDownloadUrl(
+    public DownloadUrlResponseDto getDownloadUrl(
             @Parameter(description = "내보내기 이력 ID", required = true)
             @PathVariable Long exportHistoryId) {
-        return exportService.getDownloadUrl(exportHistoryId);
+        String url = exportService.getDownloadUrl(exportHistoryId);
+        return new DownloadUrlResponseDto(url);
     }
 }
