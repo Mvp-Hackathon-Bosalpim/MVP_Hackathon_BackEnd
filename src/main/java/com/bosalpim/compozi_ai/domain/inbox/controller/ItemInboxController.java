@@ -5,6 +5,7 @@ import com.bosalpim.compozi_ai.domain.inbox.dto.request.ItemSearchRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.MemoRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.BulkActionResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemActionResponseDto;
+import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemDetailResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemListResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.StatusCountResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.service.InboxService;
@@ -186,5 +187,15 @@ public class ItemInboxController {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
         return inboxService.searchItems(itemNames, supplierNames, startDate, endDate, pageable);
+    }
+
+    @Operation(summary = "품목 단건 조회", description = "품목 (item) id 를 기반으로 구매 품목을 단건 조회한다.")
+    @ApiSuccess(message = "특정 구매 품목 조회 성공")
+    @GetMapping("/documents/{id}")
+    public ItemDetailResponseDto searchDetailItem(
+            @Parameter(description = "품목 ID", required = true)
+            @PathVariable Long id
+    ) {
+        return inboxService.getDetailItem(id);
     }
 }
