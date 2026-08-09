@@ -15,7 +15,7 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 @Configuration
 public class S3Config {
 
-    @Value("${app.s3.region}")
+    @Value("${app.s3.region:ap-northeast-2}")
     private String region;
 
     @Value("${app.s3.access-key:}")
