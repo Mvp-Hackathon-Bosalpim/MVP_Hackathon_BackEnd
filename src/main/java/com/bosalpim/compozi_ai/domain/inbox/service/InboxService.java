@@ -317,7 +317,7 @@ public class InboxService {
 
         item.updateItem(reqDto);
 
-        List<Item> otherItems = itemRepository.findAllByOrderByIdAsc().stream()
+        List<Item> otherItems = itemRepository.findAllByDeletedAtIsNullOrderByIdAsc().stream()
                 .filter(other -> !other.getId().equals(item.getId()))
                 .toList();
 

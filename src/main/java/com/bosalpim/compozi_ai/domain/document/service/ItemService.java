@@ -44,7 +44,7 @@ public class ItemService {
     @Transactional
     public List<Item> createCommonItem(List<CreateCommonItemDocumentReqDto> reqDtos, File savedFile) {
         DuplicateValidationResult validationResult = itemDocumentDuplicateValidator.markDuplicatesForCommon(reqDtos,
-                itemRepository.findAllByOrderByIdAsc());
+                itemRepository.findAllByDeletedAtIsNullOrderByIdAsc());
 
         return processAndSaveItemsWithDbCheck(
                 reqDtos.size(),
@@ -75,7 +75,7 @@ public class ItemService {
     public List<Item> createManualItem(CreateManualItemDocumentListReqDto reqDtos, List<File> savedFiles) {
         List<CreateManualItemDocumentReqDto> itemDtos = reqDtos.getItems();
         DuplicateValidationResult validationResult = itemDocumentDuplicateValidator.markDuplicatesForManual(itemDtos,
-                itemRepository.findAllByOrderByIdAsc());
+                itemRepository.findAllByDeletedAtIsNullOrderByIdAsc());
 
         @SuppressWarnings("unchecked")
         List<CheckDuplicatedManualItemDto> checkedDtos = (List<CheckDuplicatedManualItemDto>) validationResult.firstSeenInRequestMap();

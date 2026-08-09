@@ -20,7 +20,7 @@ public interface ItemRepository extends JpaRepository<Item, Long>, ItemQueryRepo
     List<String> findDistinctSupplierNames();
 
 
-    List<Item> findAllByOrderByIdAsc();
+    List<Item> findAllByDeletedAtIsNullOrderByIdAsc();
 
     List<Item> findByFileIdOrderByIdAsc(Long id);
 }
