@@ -21,4 +21,6 @@ public interface ItemRepository extends JpaRepository<Item, Long>, ItemQueryRepo
 
 
     List<Item> findAllByOrderByIdAsc();
+
+    List<Item> findByFileIdOrderByIdAsc(Long id);
 }
