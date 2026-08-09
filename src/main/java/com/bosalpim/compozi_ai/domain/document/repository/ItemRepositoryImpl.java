@@ -3,6 +3,7 @@ package com.bosalpim.compozi_ai.domain.document.repository;
 import static com.bosalpim.compozi_ai.domain.document.entity.QItem.item;
 
 import com.bosalpim.compozi_ai.domain.document.entity.Item;
+import com.bosalpim.compozi_ai.domain.document.enums.ReviewStatus;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.LocalDate;
@@ -19,7 +20,7 @@ public class ItemRepositoryImpl implements ItemQueryRepository {
 
     @Override
     public Page<Item> searchItems(List<String> itemNames, List<String> supplierNames, LocalDate startDate,
-                                  LocalDate endDate, Pageable pageable) {
+                                  LocalDate endDate, ReviewStatus reviewStatus, Pageable pageable) {
 
         List<Item> content = queryFactory
                 .selectFrom(item)
@@ -27,7 +28,8 @@ public class ItemRepositoryImpl implements ItemQueryRepository {
                         item.deletedAt.isNull(),
                         itemNameIn(itemNames),
                         supplierNameIn(supplierNames),
-                        effectiveDateBetween(startDate, endDate)
+                        effectiveDateBetween(startDate, endDate),
+                        reviewStatusEq(reviewStatus)
                 )
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -41,7 +43,8 @@ public class ItemRepositoryImpl implements ItemQueryRepository {
                         item.deletedAt.isNull(),
                         itemNameIn(itemNames),
                         supplierNameIn(supplierNames),
-                        effectiveDateBetween(startDate, endDate)
+                        effectiveDateBetween(startDate, endDate),
+                        reviewStatusEq(reviewStatus)
                 )
                 .fetchOne();
 
@@ -67,5 +70,9 @@ public class ItemRepositoryImpl implements ItemQueryRepository {
             return item.effectiveDate.goe(startDate);
         }
         return item.effectiveDate.loe(endDate);
+    }
+
+    private BooleanExpression reviewStatusEq(ReviewStatus reviewStatus) {
+        return reviewStatus == null ? null : item.reviewStatus.eq(reviewStatus);
     }
 }
