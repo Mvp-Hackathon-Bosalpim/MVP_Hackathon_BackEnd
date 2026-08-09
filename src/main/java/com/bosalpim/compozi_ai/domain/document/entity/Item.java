@@ -4,6 +4,7 @@ import com.bosalpim.compozi_ai.domain.document.dto.request.commonFile.CreateComm
 import com.bosalpim.compozi_ai.domain.document.dto.request.manualFile.CreateManualItemDocumentReqDto;
 import com.bosalpim.compozi_ai.domain.document.enums.ReviewStatus;
 import com.bosalpim.compozi_ai.domain.document.enums.SourceType;
+import com.bosalpim.compozi_ai.domain.inbox.dto.request.ItemUpdateRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.entity.DuplicatedGroup;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -145,5 +146,33 @@ public class Item {
 
     public void updateDuplicatedGroup(DuplicatedGroup newGroup) {
         this.duplicatedGroup = newGroup;
+    }
+
+    public void updateItem(ItemUpdateRequestDto dto) {
+        if (dto.getNormalizedItemName() != null) {
+            this.normalizedItemName = dto.getNormalizedItemName();
+        }
+        if (dto.getSupplierName() != null) {
+            this.supplierName = dto.getSupplierName();
+        }
+        if (dto.getSpec() != null) {
+            this.spec = dto.getSpec();
+        }
+        if (dto.getUnit() != null) {
+            this.unit = dto.getUnit();
+        }
+        if (dto.getPriceBefore() != null) {
+            this.priceBefore = dto.getPriceBefore();
+        }
+        if (dto.getPriceAfter() != null) {
+            this.priceAfter = dto.getPriceAfter();
+        }
+        if (dto.getEffectiveDate() != null) {
+            this.effectiveDate = dto.getEffectiveDate();
+        }
+    }
+
+    public void updateReviewStatus(ReviewStatus reviewStatus) {
+        this.reviewStatus = reviewStatus;
     }
 }

@@ -3,6 +3,7 @@ package com.bosalpim.compozi_ai.domain.inbox.controller;
 import com.bosalpim.compozi_ai.domain.document.enums.ReviewStatus;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.BulkIdsRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.ItemSearchRequestDto;
+import com.bosalpim.compozi_ai.domain.inbox.dto.request.ItemUpdateRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.MemoRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.BulkActionResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemActionResponseDto;
@@ -25,6 +26,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -200,4 +202,19 @@ public class ItemInboxController {
     ) {
         return inboxService.getDetailItem(id);
     }
+
+    @Operation(summary = "품목 단건 수정", description = "품목 (item) id 를 기반으로 특정 품목을 수정요청 한다.")
+    @ApiSuccess(message = "특정 구매 품목 수정 성공")
+    @PatchMapping("/documents/{id}")
+    public Void updateDetailItem(
+            @Parameter(description = "품목 ID", required = true)
+            @PathVariable Long id,
+            @Parameter(description = "수정 내용", required = true)
+            @RequestBody ItemUpdateRequestDto reqDto
+    ) {
+
+        return inboxService.updateDetailItem(id, reqDto);
+
+    }
+
 }

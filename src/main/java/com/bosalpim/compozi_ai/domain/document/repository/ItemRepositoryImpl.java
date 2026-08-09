@@ -4,10 +4,13 @@ import static com.bosalpim.compozi_ai.domain.document.entity.QItem.item;
 
 import com.bosalpim.compozi_ai.domain.document.entity.Item;
 import com.bosalpim.compozi_ai.domain.document.enums.ReviewStatus;
+import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemNavigationDto;
+import com.bosalpim.compozi_ai.domain.document.enums.ReviewStatus;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -50,6 +53,65 @@ public class ItemRepositoryImpl implements ItemQueryRepository {
 
         return new PageImpl<>(content, pageable, total != null ? total : 0);
     }
+
+    @Override
+    public Optional<ItemNavigationDto> findNavigationByIdExcludingStatuses(Long targetId,
+                                                                           List<ReviewStatus> excludedStatuses) {
+        Integer exists = queryFactory
+                .selectOne()
+                .from(item)
+                .where(
+                        item.id.eq(targetId),
+                        item.deletedAt.isNull()
+                ).fetchFirst();
+
+        if (exists == null) {
+            return Optional.empty();
+        }
+        Long prevId = queryFactory
+                .select(item.id)
+                .from(item)
+                .where(
+                        item.deletedAt.isNull(),
+                        item.id.lt(targetId)
+                )
+                .orderBy(item.id.desc())
+                .fetchFirst();
+
+        Long nextId = queryFactory
+                .select(item.id)
+                .from(item)
+                .where(
+                        item.deletedAt.isNull(),
+                        item.id.gt(targetId)
+                )
+                .orderBy(item.id.asc())
+                .fetchFirst();
+
+        Long targetIndex = queryFactory
+                .select(item.count())
+                .from(item)
+                .where(
+                        item.deletedAt.isNull(),
+                        item.id.lt(targetId)
+                )
+                .fetchOne();
+
+        Long totalCount = queryFactory
+                .select(item.count())
+                .from(item)
+                .where(item.deletedAt.isNull())
+                .fetchOne();
+
+        return Optional.of(ItemNavigationDto.builder()
+                .targetId(targetId)
+                .targetIndex(targetIndex != null ? targetIndex + 1L : 1L)
+                .prevId(prevId)
+                .nextId(nextId)
+                .totalCount(totalCount != null ? totalCount : 0L)
+                .build());
+    }
+
 
     private BooleanExpression itemNameIn(List<String> itemNames) {
         return (itemNames == null || itemNames.isEmpty()) ? null : item.normalizedItemName.in(itemNames);

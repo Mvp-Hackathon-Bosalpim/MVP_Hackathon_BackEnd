@@ -56,4 +56,8 @@ public class Issue {
                 .item(item)
                 .build();
     }
+
+    public void resolve() {
+        this.resolved = true;
+    }
 }
