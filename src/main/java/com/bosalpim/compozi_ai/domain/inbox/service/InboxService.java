@@ -6,6 +6,7 @@ import com.bosalpim.compozi_ai.domain.document.entity.Item;
 import com.bosalpim.compozi_ai.domain.document.enums.ReviewStatus;
 import com.bosalpim.compozi_ai.domain.document.repository.ItemRepository;
 import com.bosalpim.compozi_ai.domain.document.service.ItemService;
+import com.bosalpim.compozi_ai.domain.inbox.dto.request.BulkItemDeleteRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.ChangeLogCreateDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.ItemSnapshotDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.ItemUpdateRequestDto;
@@ -28,8 +29,11 @@ import com.bosalpim.compozi_ai.general.response.PageResponseDto;
 import jakarta.validation.Validator;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -442,7 +446,7 @@ public class InboxService {
         );
 
         handleDuplicatedGroupOnDelete(item);
-        
+
         issueRepository.deleteByItem(item);
         item.delete();
 
@@ -477,5 +481,62 @@ public class InboxService {
         }
 
         deletedItem.updateDuplicatedGroup(null);
+    }
+
+    // 다건 bulk 삭제
+    @Transactional
+    public List<Long> deleteBulkItem(BulkItemDeleteRequestDto bulkItemDeleteRequestDto) {
+        List<Long> targetIds = bulkItemDeleteRequestDto.getIds();
+        if (targetIds == null || targetIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Item> targetItems = itemRepository.findAllById(targetIds);
+        if (targetItems.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        Set<Long> affectedGroupIds = targetItems.stream()
+                .map(Item::getDuplicatedGroup)
+                .filter(Objects::nonNull)
+                .map(DuplicatedGroup::getId)
+                .collect(Collectors.toSet());
+
+        issueRepository.deleteAllByItemIn(targetItems);
+
+        List<ChangeLog> changeLogs = new ArrayList<>();
+        for (Item item : targetItems) {
+            item.updateDuplicatedGroup(null); // 본인 그룹 연관관계 해제
+            item.delete();
+            changeLogs.add(ChangeLog.of(item, Action.DELETE));
+        }
+        changeLogRepository.saveAll(changeLogs);
+
+        if (!affectedGroupIds.isEmpty()) {
+            handleDuplicatedGroupsOnBulkDelete(affectedGroupIds);
+        }
+
+        return targetItems.stream().map(Item::getId).toList();
+    }
+
+    private void handleDuplicatedGroupsOnBulkDelete(Set<Long> affectedGroupIds) {
+        List<Item> activeItems = itemRepository.findAllByDeletedAtIsNullOrderByIdAsc();
+
+        for (Long groupId : affectedGroupIds) {
+            List<Item> remainingItems = activeItems.stream()
+                    .filter(item -> item.getDuplicatedGroup() != null)
+                    .filter(item -> groupId.equals(item.getDuplicatedGroup().getId()))
+                    .toList();
+
+            if (remainingItems.size() <= 1) {
+                for (Item lonelyItem : remainingItems) {
+                    lonelyItem.updateDuplicatedGroup(null);
+
+                    issueRepository.findByItemAndResolved(lonelyItem, false).stream()
+                            .filter(issue -> issue.getIssueType() == IssueType.DUPLICATE_SUSPECTED)
+                            .forEach(Issue::resolve);
+                }
+            }
+        }
     }
 }

@@ -15,4 +15,6 @@ public interface IssueRepository extends JpaRepository<Issue, Long> {
     List<Issue> findByItemAndResolved(Item item, boolean resolved);
 
     void deleteByItem(Item item);
+
+    void deleteAllByItemIn(List<Item> targetItems);
 }

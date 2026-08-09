@@ -2,6 +2,7 @@ package com.bosalpim.compozi_ai.domain.inbox.controller;
 
 import com.bosalpim.compozi_ai.domain.document.enums.ReviewStatus;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.BulkIdsRequestDto;
+import com.bosalpim.compozi_ai.domain.inbox.dto.request.BulkItemDeleteRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.ItemSearchRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.ItemUpdateRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.MemoRequestDto;
@@ -226,6 +227,16 @@ public class ItemInboxController {
             @PathVariable Long id
     ) {
         return inboxService.deleteDetailItem(id);
+    }
+
+    @Operation(summary = "품목 다건 삭제", description = "품목 (item) id 를 기반으로 다건(bulk) 삭제요청 한다.")
+    @ApiSuccess(message = "구매 품목 다건 삭제 성공")
+    @DeleteMapping("/documents")
+    public List<Long> deleteDetailItem(
+            @Parameter(description = "품목 ID 리스트", required = true)
+            @RequestBody BulkItemDeleteRequestDto bulkItemDeleteRequestDto
+    ) {
+        return inboxService.deleteBulkItem(bulkItemDeleteRequestDto);
     }
 
 }
