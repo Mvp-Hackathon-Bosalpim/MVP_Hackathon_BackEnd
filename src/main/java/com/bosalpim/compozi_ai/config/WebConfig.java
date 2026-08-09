@@ -14,7 +14,7 @@ public class WebConfig implements WebMvcConfigurer {
                         "http://bosalpim.cloud",
                         "http://localhost:8080",
                         "http://localhost:3000")
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
                 .allowedHeaders("*");
     }
 }
