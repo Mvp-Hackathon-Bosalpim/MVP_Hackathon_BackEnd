@@ -63,6 +63,10 @@ public class InboxService {
             throw new CustomException(BadStatusCode.ITEM_ALREADY_APPROVED);
         }
 
+        if (item.getReviewStatus() == ReviewStatus.REJECTED) {
+            throw new CustomException(BadStatusCode.ITEM_ALREADY_REJECTED);
+        }
+
         List<Issue> unresolvedIssues = issueRepository.findByItemAndResolved(item, false);
 
         boolean hasMissingRequired = unresolvedIssues.stream()
@@ -130,6 +134,10 @@ public class InboxService {
             }
             if (item.getReviewStatus() == ReviewStatus.APPROVED) {
                 failedList.add(new BulkActionResponseDto.FailedItemDto(id, BadStatusCode.ITEM_ALREADY_APPROVED));
+                continue;
+            }
+            if (item.getReviewStatus() == ReviewStatus.REJECTED) {
+                failedList.add(new BulkActionResponseDto.FailedItemDto(id, BadStatusCode.ITEM_ALREADY_REJECTED));
                 continue;
             }
 
