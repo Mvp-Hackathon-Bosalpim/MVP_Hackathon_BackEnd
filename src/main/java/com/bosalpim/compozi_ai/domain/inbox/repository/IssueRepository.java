@@ -13,4 +13,6 @@ public interface IssueRepository extends JpaRepository<Issue, Long> {
     List<Issue> findByItemIdAndResolvedFalse(Long itemId);
 
     List<Issue> findByItemAndResolved(Item item, boolean resolved);
+
+    void deleteByItem(Item item);
 }

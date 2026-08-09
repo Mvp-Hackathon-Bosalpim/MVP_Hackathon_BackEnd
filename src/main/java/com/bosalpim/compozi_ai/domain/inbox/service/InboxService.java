@@ -433,4 +433,49 @@ public class InboxService {
     private boolean hasNoActiveIssue(List<Issue> unresolvedIssues, IssueType type) {
         return unresolvedIssues.stream().noneMatch(i -> i.getIssueType() == type);
     }
+
+    // 삭제 서비스
+    @Transactional
+    public Void deleteDetailItem(Long id) {
+        Item item = itemRepository.findById(id).orElseThrow(
+                () -> new CustomException(BadStatusCode.ITEM_NOT_FOUND)
+        );
+
+        handleDuplicatedGroupOnDelete(item);
+        
+        issueRepository.deleteByItem(item);
+        item.delete();
+
+        ChangeLog changeLog = ChangeLog.of(item, Action.DELETE);
+        changeLogRepository.save(changeLog);
+
+        return null;
+    }
+
+    private void handleDuplicatedGroupOnDelete(Item deletedItem) {
+        DuplicatedGroup targetGroup = deletedItem.getDuplicatedGroup();
+        if (targetGroup == null) {
+            return;
+        }
+
+        Long groupId = targetGroup.getId();
+
+        List<Item> remainingItemsInGroup = itemRepository.findAllByDeletedAtIsNullOrderByIdAsc().stream()
+                .filter(other -> !other.getId().equals(deletedItem.getId()))
+                .filter(other -> other.getDuplicatedGroup() != null)
+                .filter(other -> groupId.equals(other.getDuplicatedGroup().getId()))
+                .toList();
+
+        if (remainingItemsInGroup.size() == 1) {
+            Item lonelyItem = remainingItemsInGroup.get(0);
+
+            lonelyItem.updateDuplicatedGroup(null);
+
+            issueRepository.findByItemAndResolved(lonelyItem, false).stream()
+                    .filter(issue -> issue.getIssueType() == IssueType.DUPLICATE_SUSPECTED)
+                    .forEach(Issue::resolve);
+        }
+
+        deletedItem.updateDuplicatedGroup(null);
+    }
 }

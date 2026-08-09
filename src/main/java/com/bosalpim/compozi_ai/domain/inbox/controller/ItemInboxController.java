@@ -25,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -215,6 +216,16 @@ public class ItemInboxController {
 
         return inboxService.updateDetailItem(id, reqDto);
 
+    }
+
+    @Operation(summary = "품목 단건 삭제", description = "품목 (item) id 를 기반으로 특정 품목을 삭제요청 한다.")
+    @ApiSuccess(message = "특정 구매 품목 삭제 성공")
+    @DeleteMapping("/documents/{id}")
+    public Void deleteDetailItem(
+            @Parameter(description = "품목 ID", required = true)
+            @PathVariable Long id
+    ) {
+        return inboxService.deleteDetailItem(id);
     }
 
 }

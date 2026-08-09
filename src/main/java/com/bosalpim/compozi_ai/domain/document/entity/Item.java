@@ -175,4 +175,8 @@ public class Item {
     public void updateReviewStatus(ReviewStatus reviewStatus) {
         this.reviewStatus = reviewStatus;
     }
+
+    public void delete() {
+        this.deletedAt = LocalDateTime.now();
+    }
 }
