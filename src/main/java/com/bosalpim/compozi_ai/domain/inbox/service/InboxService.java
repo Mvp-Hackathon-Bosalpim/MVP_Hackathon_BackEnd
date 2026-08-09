@@ -6,6 +6,7 @@ import com.bosalpim.compozi_ai.domain.document.repository.ItemRepository;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.BulkActionResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemDetailResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemListResponseDto;
+import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemNavigationDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.StatusCountResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.entity.ChangeLog;
 import com.bosalpim.compozi_ai.domain.inbox.entity.Issue;
@@ -282,23 +283,11 @@ public class InboxService {
                 .map(Issue::getIssueType)
                 .toList();
         List<ChangeLog> changeLog = changeLogRepository.findAllByItemId(item.getId());
+        ItemNavigationDto navigationDto = itemRepository.findNavigationByIdExcludingStatuses(item.getId(),
+                List.of(ReviewStatus.APPROVED, ReviewStatus.REJECTED)).orElseThrow(
+                () -> new CustomException(BadStatusCode.ITEM_NOT_FOUND)
+        );
 
-        List<Item> fileItems = itemRepository.findByFileIdOrderByIdAsc(item.getFile().getId());
-
-        int total = fileItems.size();
-        int targetIndex = -1;
-
-        // 현재 아이템의 인덱스 찾기
-        for (int i = 0; i < total; i++) {
-            if (fileItems.get(i).getId().equals(item.getId())) {
-                targetIndex = i;
-                break;
-            }
-        }
-        int currentIndex = targetIndex + 1;
-        Long previousDocId = (targetIndex > 0) ? fileItems.get(targetIndex - 1).getId() : null;
-        Long nextDocId = (targetIndex < total - 1) ? fileItems.get(targetIndex + 1).getId() : null;
-
-        return ItemDetailResponseDto.of(item, exceptionFlags, changeLog, previousDocId, nextDocId, currentIndex, total);
+        return ItemDetailResponseDto.of(item, exceptionFlags, changeLog, navigationDto);
     }
 }
