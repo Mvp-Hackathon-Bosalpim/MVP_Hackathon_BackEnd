@@ -44,7 +44,7 @@ public class ItemService {
     @Transactional
     public List<Item> createCommonItem(List<CreateCommonItemDocumentReqDto> reqDtos, File savedFile) {
         DuplicateValidationResult validationResult = itemDocumentDuplicateValidator.markDuplicatesForCommon(reqDtos,
-                itemRepository.findAllByOrderByIdAsc());
+                itemRepository.findAllByDeletedAtIsNullOrderByIdAsc());
 
         return processAndSaveItemsWithDbCheck(
                 reqDtos.size(),
@@ -75,7 +75,7 @@ public class ItemService {
     public List<Item> createManualItem(CreateManualItemDocumentListReqDto reqDtos, List<File> savedFiles) {
         List<CreateManualItemDocumentReqDto> itemDtos = reqDtos.getItems();
         DuplicateValidationResult validationResult = itemDocumentDuplicateValidator.markDuplicatesForManual(itemDtos,
-                itemRepository.findAllByOrderByIdAsc());
+                itemRepository.findAllByDeletedAtIsNullOrderByIdAsc());
 
         @SuppressWarnings("unchecked")
         List<CheckDuplicatedManualItemDto> checkedDtos = (List<CheckDuplicatedManualItemDto>) validationResult.firstSeenInRequestMap();
@@ -113,15 +113,15 @@ public class ItemService {
         );
     }
 
-    private ReviewStatus determineReviewStatus(String spec, String unit, boolean isDuplicate) {
+    public ReviewStatus determineReviewStatus(String spec, String unit, boolean isDuplicate) {
         boolean hasSpecOrUnitIssue = itemSpecAndUnitValidator.isSpecMismatch(spec)
                 || itemSpecAndUnitValidator.isUnitMismatch(unit);
 
         return (hasSpecOrUnitIssue || isDuplicate) ? ReviewStatus.ON_HOLD : ReviewStatus.NEW;
     }
 
-    private void collectIssuesIfNeeded(Item item, String spec, String unit, Consumer<Issue> issueCollector,
-                                       boolean hasMissingField) {
+    public void collectIssuesIfNeeded(Item item, String spec, String unit, Consumer<Issue> issueCollector,
+                                      boolean hasMissingField) {
         if (itemSpecAndUnitValidator.isSpecMismatch(spec)) {
             issueCollector.accept(Issue.create(IssueType.SPEC_MISMATCH, "규격 불일치", false, item));
         }
