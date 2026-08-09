@@ -249,9 +249,10 @@ public class InboxService {
     @Transactional(readOnly = true)
     public PageResponseDto<ItemListResponseDto> searchItems(
             List<String> itemNames, List<String> supplierNames, LocalDate startDate, LocalDate endDate,
-            Pageable pageable) {
+            ReviewStatus reviewStatus, Pageable pageable) {
 
-        Page<Item> itemPage = itemRepository.searchItems(itemNames, supplierNames, startDate, endDate, pageable);
+        Page<Item> itemPage = itemRepository.searchItems(itemNames, supplierNames, startDate, endDate, reviewStatus,
+                pageable);
 
         List<Long> itemIds = itemPage.getContent().stream()
                 .map(Item::getId)
