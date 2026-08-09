@@ -1,21 +1,31 @@
 package com.bosalpim.compozi_ai.domain.inbox.service;
 
+import com.bosalpim.compozi_ai.domain.document.component.validator.ItemDocumentDuplicateValidator;
+import com.bosalpim.compozi_ai.domain.document.component.validator.ItemSpecAndUnitValidator;
 import com.bosalpim.compozi_ai.domain.document.entity.Item;
 import com.bosalpim.compozi_ai.domain.document.enums.ReviewStatus;
 import com.bosalpim.compozi_ai.domain.document.repository.ItemRepository;
+import com.bosalpim.compozi_ai.domain.document.service.ItemService;
+import com.bosalpim.compozi_ai.domain.inbox.dto.request.ChangeLogCreateDto;
+import com.bosalpim.compozi_ai.domain.inbox.dto.request.ItemSnapshotDto;
+import com.bosalpim.compozi_ai.domain.inbox.dto.request.ItemUpdateRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.BulkActionResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemDetailResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemListResponseDto;
+import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemNavigationDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.StatusCountResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.entity.ChangeLog;
+import com.bosalpim.compozi_ai.domain.inbox.entity.DuplicatedGroup;
 import com.bosalpim.compozi_ai.domain.inbox.entity.Issue;
 import com.bosalpim.compozi_ai.domain.inbox.enums.Action;
 import com.bosalpim.compozi_ai.domain.inbox.enums.IssueType;
 import com.bosalpim.compozi_ai.domain.inbox.repository.ChangeLogRepository;
+import com.bosalpim.compozi_ai.domain.inbox.repository.DuplicatedGroupRepository;
 import com.bosalpim.compozi_ai.domain.inbox.repository.IssueRepository;
 import com.bosalpim.compozi_ai.general.enums.BadStatusCode;
 import com.bosalpim.compozi_ai.general.exception.CustomException;
 import com.bosalpim.compozi_ai.general.response.PageResponseDto;
+import jakarta.validation.Validator;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +43,12 @@ public class InboxService {
     private final ItemRepository itemRepository;
     private final IssueRepository issueRepository;
     private final ChangeLogRepository changeLogRepository;
+    private final DuplicatedGroupRepository duplicatedGroupRepository;
+    private final ItemService itemService;
+    private final ItemSpecAndUnitValidator itemSpecAndUnitValidator;
+    private final ItemDocumentDuplicateValidator itemDocumentDuplicateValidator;
+    private final Validator validator;
+
 
     @Transactional
     public Long approve(Long id, String memo) {
@@ -283,23 +299,154 @@ public class InboxService {
                 .map(Issue::getIssueType)
                 .toList();
         List<ChangeLog> changeLog = changeLogRepository.findAllByItemId(item.getId());
+        ItemNavigationDto navigationDto = itemRepository.findNavigationByIdExcludingStatuses(item.getId(),
+                List.of(ReviewStatus.APPROVED, ReviewStatus.REJECTED)).orElseThrow(
+                () -> new CustomException(BadStatusCode.ITEM_NOT_FOUND)
+        );
 
-        List<Item> fileItems = itemRepository.findByFileIdOrderByIdAsc(item.getFile().getId());
+        return ItemDetailResponseDto.of(item, exceptionFlags, changeLog, navigationDto);
+    }
 
-        int total = fileItems.size();
-        int targetIndex = -1;
+    // 아래 코드는 업데이트 시 수정 로직 (item 변경, 중복, 빈 칸, 단위 * 규격 불일치, 탐지 및 이슈화, 그리고 change_log 생성)
+    @Transactional
+    public Void updateDetailItem(Long id, ItemUpdateRequestDto reqDto) {
+        Item item = itemRepository.findById(id).
+                orElseThrow(() -> new CustomException(BadStatusCode.ITEM_NOT_FOUND));
 
-        // 현재 아이템의 인덱스 찾기
-        for (int i = 0; i < total; i++) {
-            if (fileItems.get(i).getId().equals(item.getId())) {
-                targetIndex = i;
-                break;
+        ItemSnapshotDto beforeItem = ItemSnapshotDto.create(item);
+
+        item.updateItem(reqDto);
+
+        List<Item> otherItems = itemRepository.findAllByDeletedAtIsNullOrderByIdAsc().stream()
+                .filter(other -> !other.getId().equals(item.getId()))
+                .toList();
+
+        String currentKey = itemDocumentDuplicateValidator.generateKey(
+                item.getSupplierName(), item.getNormalizedItemName(), item.getSpec(),
+                item.getUnit(), item.getPriceBefore(), item.getPriceAfter(), item.getEffectiveDate()
+        );
+
+        Item duplicatedTarget = otherItems.stream()
+                .filter(other -> !other.getId().equals(item.getId()))
+                .filter(other -> currentKey.equals(itemDocumentDuplicateValidator.generateKey(
+                        other.getSupplierName(), other.getNormalizedItemName(), other.getSpec(),
+                        other.getUnit(), other.getPriceBefore(), other.getPriceAfter(), other.getEffectiveDate()
+                )))
+                .findFirst()
+                .orElse(null);
+
+        boolean isDuplicate = (duplicatedTarget != null);
+
+        if (isDuplicate) {
+            if (duplicatedTarget.getDuplicatedGroup() != null) {
+                item.updateDuplicatedGroup(duplicatedTarget.getDuplicatedGroup());
+            } else {
+                DuplicatedGroup newGroup = DuplicatedGroup.create();
+                duplicatedGroupRepository.save(newGroup);
+                duplicatedTarget.updateDuplicatedGroup(newGroup);
+                item.updateDuplicatedGroup(newGroup);
+            }
+        } else {
+            item.updateDuplicatedGroup(null);
+        }
+
+        handleDuplicatedGroup(item, duplicatedTarget, otherItems);
+
+        boolean hasMissingField = !validator.validate(item).isEmpty();
+
+        ReviewStatus reviewStatus = itemService.determineReviewStatus(item.getSpec(), item.getUnit(), isDuplicate);
+
+        if (reviewStatus.equals(ReviewStatus.NEW) && hasMissingField) {
+            reviewStatus = ReviewStatus.NEEDS_REVIEW;
+        }
+        item.updateReviewStatus(reviewStatus);
+
+        updateItemIssues(item, isDuplicate, hasMissingField);
+
+        List<ChangeLogCreateDto> createDtos = ChangeLogCreateDto.createList(beforeItem, item);
+        List<ChangeLog> changeLogs = createDtos.stream()
+                .map(dto -> ChangeLog.of(item, Action.EDIT, dto))
+                .toList();
+        changeLogRepository.saveAll(changeLogs);
+
+        return null;
+    }
+
+
+    private void handleDuplicatedGroup(Item item, Item duplicatedTarget, List<Item> otherItems) {
+        DuplicatedGroup previousGroup = item.getDuplicatedGroup();
+
+        if (duplicatedTarget != null) {
+            if (duplicatedTarget.getDuplicatedGroup() != null) {
+                item.updateDuplicatedGroup(duplicatedTarget.getDuplicatedGroup());
+            } else {
+                DuplicatedGroup newGroup = DuplicatedGroup.create();
+                duplicatedGroupRepository.save(newGroup);
+                duplicatedTarget.updateDuplicatedGroup(newGroup);
+                item.updateDuplicatedGroup(newGroup);
+            }
+        } else {
+            item.updateDuplicatedGroup(null);
+
+            if (previousGroup != null) {
+                List<Item> remainingItemsInGroup = otherItems.stream()
+                        .filter(other -> previousGroup.equals(other.getDuplicatedGroup()))
+                        .toList();
+
+                if (remainingItemsInGroup.size() == 1) {
+                    Item lonelyItem = remainingItemsInGroup.get(0);
+                    lonelyItem.updateDuplicatedGroup(null);
+
+                    issueRepository.findByItemAndResolved(lonelyItem, false).stream()
+                            .filter(issue -> issue.getIssueType() == IssueType.DUPLICATE_SUSPECTED)
+                            .forEach(Issue::resolve);
+                }
             }
         }
-        int currentIndex = targetIndex + 1;
-        Long previousDocId = (targetIndex > 0) ? fileItems.get(targetIndex - 1).getId() : null;
-        Long nextDocId = (targetIndex < total - 1) ? fileItems.get(targetIndex + 1).getId() : null;
+    }
 
-        return ItemDetailResponseDto.of(item, exceptionFlags, changeLog, previousDocId, nextDocId, currentIndex, total);
+    private void updateItemIssues(Item item, boolean isDuplicate, boolean hasMissingField) {
+        List<Issue> unresolvedIssues = issueRepository.findByItemAndResolved(item, false);
+
+        boolean isSpecMismatch = itemSpecAndUnitValidator.isSpecMismatch(item.getSpec());
+        boolean isUnitMismatch = itemSpecAndUnitValidator.isUnitMismatch(item.getUnit());
+
+        for (Issue issue : unresolvedIssues) {
+            if (issue.getIssueType() == IssueType.SPEC_MISMATCH && !isSpecMismatch) {
+                issue.resolve();
+            }
+            if (issue.getIssueType() == IssueType.UNIT_MISMATCH && !isUnitMismatch) {
+                issue.resolve();
+            }
+            if (issue.getIssueType() == IssueType.MISSING_REQUIRED && !hasMissingField) {
+                issue.resolve();
+            }
+            if (issue.getIssueType() == IssueType.DUPLICATE_SUSPECTED && !isDuplicate) {
+                issue.resolve();
+            }
+        }
+
+        List<Issue> newIssues = new ArrayList<>();
+
+        itemService.collectIssuesIfNeeded(item, item.getSpec(), item.getUnit(),
+                issue -> {
+                    if (hasNoActiveIssue(unresolvedIssues, issue.getIssueType())) {
+                        newIssues.add(issue);
+                    }
+                },
+                hasMissingField
+        );
+
+        if (isDuplicate && hasNoActiveIssue(unresolvedIssues, IssueType.DUPLICATE_SUSPECTED)) {
+            newIssues.add(Issue.create(IssueType.DUPLICATE_SUSPECTED, "중복 의심", false, item));
+        }
+
+        if (!newIssues.isEmpty()) {
+            issueRepository.saveAll(newIssues);
+        }
+    }
+
+    private boolean hasNoActiveIssue(List<Issue> unresolvedIssues, IssueType type) {
+        return unresolvedIssues.stream().noneMatch(i -> i.getIssueType() == type);
     }
 }

@@ -31,6 +31,7 @@ public class ItemDetailResponseDto {
     private LocalDate effectiveDate;
 
     private ReviewStatus reviewStatus;
+    private Long duplicateGroup;
     private List<IssueType> exceptionFlags;
     private SourceRef sourceRef;
 
@@ -38,8 +39,8 @@ public class ItemDetailResponseDto {
 
     private Long previousDocId;
     private Long nextDocId;
-    private Integer currentIndex;
-    private Integer total;
+    private Long currentIndex;
+    private Long total;
 
     @Getter
     @Builder
@@ -63,10 +64,7 @@ public class ItemDetailResponseDto {
             Item item,
             List<IssueType> exceptionFlags,
             List<ChangeLog> changeLogs,
-            Long previousDocId,
-            Long nextDocId,
-            int currentIndex,
-            int total
+            ItemNavigationDto navigationDto
     ) {
         return ItemDetailResponseDto.builder()
                 .docId(item.getDocId())
@@ -80,6 +78,8 @@ public class ItemDetailResponseDto {
                 .priceAfter(item.getPriceAfter())
                 .effectiveDate(item.getEffectiveDate())
                 .reviewStatus(item.getReviewStatus())
+                .duplicateGroup(
+                        item.getDuplicatedGroup() != null ? item.getDuplicatedGroup().getId() : null)
                 .exceptionFlags(exceptionFlags)
                 .sourceRef(SourceRef.of(
                         item.getFile() != null ? item.getFile().getInputMethod().name().toLowerCase() : null,
@@ -91,10 +91,10 @@ public class ItemDetailResponseDto {
                                 .map(ChangeLogDto::of)
                                 .toList()
                 )
-                .previousDocId(previousDocId)
-                .nextDocId(nextDocId)
-                .currentIndex(currentIndex)
-                .total(total)
+                .previousDocId(navigationDto.getPrevId())
+                .nextDocId(navigationDto.getNextId())
+                .currentIndex(navigationDto.getTargetIndex())
+                .total(navigationDto.getTotalCount())
                 .build();
     }
 }
