@@ -336,31 +336,14 @@ public class InboxService {
                 .orElse(null);
 
         boolean isDuplicate = (duplicatedTarget != null);
-
-        if (isDuplicate) {
-            if (duplicatedTarget.getDuplicatedGroup() != null) {
-                item.updateDuplicatedGroup(duplicatedTarget.getDuplicatedGroup());
-            } else {
-                DuplicatedGroup newGroup = DuplicatedGroup.create();
-                duplicatedGroupRepository.save(newGroup);
-                duplicatedTarget.updateDuplicatedGroup(newGroup);
-                item.updateDuplicatedGroup(newGroup);
-            }
-        } else {
-            item.updateDuplicatedGroup(null);
-        }
-
         handleDuplicatedGroup(item, duplicatedTarget, otherItems);
-
         boolean hasMissingField = !validator.validate(item).isEmpty();
-
         ReviewStatus reviewStatus = itemService.determineReviewStatus(item.getSpec(), item.getUnit(), isDuplicate);
 
         if (reviewStatus.equals(ReviewStatus.NEW) && hasMissingField) {
             reviewStatus = ReviewStatus.NEEDS_REVIEW;
         }
         item.updateReviewStatus(reviewStatus);
-
         updateItemIssues(item, isDuplicate, hasMissingField);
 
         List<ChangeLogCreateDto> createDtos = ChangeLogCreateDto.createList(beforeItem, item);
@@ -395,6 +378,7 @@ public class InboxService {
 
                 if (remainingItemsInGroup.size() == 1) {
                     Item lonelyItem = remainingItemsInGroup.get(0);
+                    lonelyItem.updateReviewStatus(ReviewStatus.NEW);
                     lonelyItem.updateDuplicatedGroup(null);
 
                     issueRepository.findByItemAndResolved(lonelyItem, false).stream()
