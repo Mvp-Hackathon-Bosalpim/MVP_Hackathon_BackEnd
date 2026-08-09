@@ -2,6 +2,7 @@ package com.bosalpim.compozi_ai.domain.inbox.controller;
 
 import com.bosalpim.compozi_ai.domain.document.enums.ReviewStatus;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.BulkIdsRequestDto;
+import com.bosalpim.compozi_ai.domain.inbox.dto.request.BulkItemDeleteRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.ItemSearchRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.ItemUpdateRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.MemoRequestDto;
@@ -25,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -215,6 +217,26 @@ public class ItemInboxController {
 
         return inboxService.updateDetailItem(id, reqDto);
 
+    }
+
+    @Operation(summary = "품목 단건 삭제", description = "품목 (item) id 를 기반으로 특정 품목을 삭제요청 한다.")
+    @ApiSuccess(message = "특정 구매 품목 삭제 성공")
+    @DeleteMapping("/documents/{id}")
+    public Void deleteDetailItem(
+            @Parameter(description = "품목 ID", required = true)
+            @PathVariable Long id
+    ) {
+        return inboxService.deleteDetailItem(id);
+    }
+
+    @Operation(summary = "품목 다건 삭제", description = "품목 (item) id 를 기반으로 다건(bulk) 삭제요청 한다.")
+    @ApiSuccess(message = "구매 품목 다건 삭제 성공")
+    @DeleteMapping("/documents")
+    public List<Long> deleteDetailItem(
+            @Parameter(description = "품목 ID 리스트", required = true)
+            @RequestBody BulkItemDeleteRequestDto bulkItemDeleteRequestDto
+    ) {
+        return inboxService.deleteBulkItem(bulkItemDeleteRequestDto);
     }
 
 }

@@ -5,6 +5,7 @@ import com.bosalpim.compozi_ai.domain.document.enums.ReviewStatus;
 import com.bosalpim.compozi_ai.domain.document.repository.ItemRepository;
 import com.bosalpim.compozi_ai.domain.export.dto.ExportData;
 import com.bosalpim.compozi_ai.domain.export.dto.request.ExportRequestDto;
+import com.bosalpim.compozi_ai.domain.export.dto.response.ExportHistoryResponseDto;
 import com.bosalpim.compozi_ai.domain.export.dto.response.ExportItemCsvResponseDto;
 import com.bosalpim.compozi_ai.domain.export.dto.response.ExportItemJsonResponseDto;
 import com.bosalpim.compozi_ai.domain.export.entity.ExportHistory;
@@ -18,6 +19,7 @@ import com.bosalpim.compozi_ai.domain.inbox.repository.ChangeLogRepository;
 import com.bosalpim.compozi_ai.domain.inbox.repository.IssueRepository;
 import com.bosalpim.compozi_ai.general.enums.BadStatusCode;
 import com.bosalpim.compozi_ai.general.exception.CustomException;
+import com.bosalpim.compozi_ai.general.response.PageResponseDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opencsv.CSVWriter;
 import java.io.IOException;
@@ -32,6 +34,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -118,26 +123,6 @@ public class ExportService {
             exportHistoryRepository.save(ExportHistory.failed(fileName, ExportFormat.CSV));
             throw new CustomException(BadStatusCode.EXPORT_UPLOAD_FAILED);
         }
-    }
-
-    // == 공통 조회 == //
-
-    private ExportData loadExportData() {
-        List<Item> items = itemRepository.findAllByReviewStatusWithFile(ReviewStatus.APPROVED);
-
-        if (items.isEmpty()) {
-            throw new CustomException(BadStatusCode.EXPORT_NO_APPROVED_ITEMS);
-        }
-
-        List<Long> itemIds = items.stream().map(Item::getId).toList();
-
-        Map<Long, List<Issue>> issuesByItemId = issueRepository.findByItemIdInAndResolvedFalse(itemIds).stream()
-                .collect(Collectors.groupingBy(issue -> issue.getItem().getId()));
-
-        Map<Long, List<ChangeLog>> changeLogsByItemId = changeLogRepository.findAllByItemIdIn(itemIds).stream()
-                .collect(Collectors.groupingBy(log -> log.getItem().getId()));
-
-        return new ExportData(items, issuesByItemId, changeLogsByItemId);
     }
 
     // == JSON 변환 == //
@@ -276,6 +261,24 @@ public class ExportService {
 
     // == 공통 추출 (JSON/CSV 공유) == //
 
+    private ExportData loadExportData() {
+        List<Item> items = itemRepository.findAllByReviewStatusWithFile(ReviewStatus.APPROVED);
+
+        if (items.isEmpty()) {
+            throw new CustomException(BadStatusCode.EXPORT_NO_APPROVED_ITEMS);
+        }
+
+        List<Long> itemIds = items.stream().map(Item::getId).toList();
+
+        Map<Long, List<Issue>> issuesByItemId = issueRepository.findByItemIdInAndResolvedFalse(itemIds).stream()
+                .collect(Collectors.groupingBy(issue -> issue.getItem().getId()));
+
+        Map<Long, List<ChangeLog>> changeLogsByItemId = changeLogRepository.findAllByItemIdIn(itemIds).stream()
+                .collect(Collectors.groupingBy(log -> log.getItem().getId()));
+
+        return new ExportData(items, issuesByItemId, changeLogsByItemId);
+    }
+
     private List<String> extractExceptionFlags(Long itemId, ExportData data) {
         return data.issuesOf(itemId).stream()
                 .map(issue -> issue.getIssueType().name())
@@ -297,5 +300,19 @@ public class ExportService {
                 .max(Comparator.comparing(ChangeLog::getAt))
                 .map(ChangeLog::getMemo)
                 .orElse("");
+    }
+
+    // History 내역 조회 //
+    public PageResponseDto<ExportHistoryResponseDto> getHistories(int page, int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<ExportHistory> histories =
+                exportHistoryRepository.findAllByOrderByExportedAtDesc(pageable);
+
+        Page<ExportHistoryResponseDto> response =
+                histories.map(ExportHistoryResponseDto::from);
+
+        return new PageResponseDto<>(response);
     }
 }

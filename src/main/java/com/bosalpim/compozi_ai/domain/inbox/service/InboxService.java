@@ -6,6 +6,7 @@ import com.bosalpim.compozi_ai.domain.document.entity.Item;
 import com.bosalpim.compozi_ai.domain.document.enums.ReviewStatus;
 import com.bosalpim.compozi_ai.domain.document.repository.ItemRepository;
 import com.bosalpim.compozi_ai.domain.document.service.ItemService;
+import com.bosalpim.compozi_ai.domain.inbox.dto.request.BulkItemDeleteRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.ChangeLogCreateDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.ItemSnapshotDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.ItemUpdateRequestDto;
@@ -28,8 +29,11 @@ import com.bosalpim.compozi_ai.general.response.PageResponseDto;
 import jakarta.validation.Validator;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -59,10 +63,17 @@ public class InboxService {
             throw new CustomException(BadStatusCode.ITEM_ALREADY_APPROVED);
         }
 
-        boolean isUnresolvedIssue = issueRepository.existsByItemIdAndResolvedFalse(item.getId());
+        List<Issue> unresolvedIssues = issueRepository.findByItemAndResolved(item, false);
 
-        if (isUnresolvedIssue) {
+        boolean hasMissingRequired = unresolvedIssues.stream()
+                .anyMatch(issue -> issue.getIssueType() == IssueType.MISSING_REQUIRED);
+        if (hasMissingRequired) {
             throw new CustomException(BadStatusCode.UNRESOLVED_ISSUE_EXISTS);
+        }
+
+        boolean hasOtherUnresolvedIssue = !unresolvedIssues.isEmpty();
+        if (hasOtherUnresolvedIssue && (memo == null || memo.isBlank())) {
+            throw new CustomException(BadStatusCode.APPROVAL_MEMO_REQUIRED);
         }
 
         item.approve();
@@ -91,26 +102,24 @@ public class InboxService {
 
     @Transactional
     public BulkActionResponseDto bulkApprove(List<Long> ids, String memo) {
-
-        // Item들을 한 번의 쿼리로 다 가져옴 (쿼리1)
+        // 쿼리1: id 목록으로 Item 일괄 조회
         List<Item> items = itemRepository.findAllById(ids);
         Map<Long, Item> itemMap = items.stream()
                 .collect(Collectors.toMap(Item::getId, item -> item));
 
         List<Long> itemIds = new ArrayList<>(itemMap.keySet());
 
-        // 쿼리 2
+        // 쿼리2: 대상 Item들의 미해결 이슈 일괄 조회
         List<Issue> unresolvedIssues = issueRepository.findByItemIdInAndResolvedFalse(itemIds);
 
-        Map<Long, List<String>> issueTypesByItemId = unresolvedIssues.stream()
-                .collect(Collectors.groupingBy(
-                        issue -> issue.getItem().getId(),
-                        Collectors.mapping(issue -> issue.getIssueType().name(), Collectors.toList())
-                ));
+        Map<Long, List<Issue>> unresolvedIssuesByItemId = unresolvedIssues.stream()
+                .collect(Collectors.groupingBy(issue -> issue.getItem().getId()));
 
         List<Long> successIds = new ArrayList<>();
         List<BulkActionResponseDto.FailedItemDto> failedList = new ArrayList<>();
         List<ChangeLog> logsToSave = new ArrayList<>();
+
+        boolean memoProvided = memo != null && !memo.isBlank();
 
         for (Long id : ids) {
             Item item = itemMap.get(id);
@@ -123,9 +132,23 @@ public class InboxService {
                 failedList.add(new BulkActionResponseDto.FailedItemDto(id, BadStatusCode.ITEM_ALREADY_APPROVED));
                 continue;
             }
-            if (issueTypesByItemId.containsKey(id)) {
+
+            List<Issue> itemIssues = unresolvedIssuesByItemId.getOrDefault(id, List.of());
+
+            boolean hasMissingRequired = itemIssues.stream()
+                    .anyMatch(issue -> issue.getIssueType() == IssueType.MISSING_REQUIRED);
+            if (hasMissingRequired) {
                 failedList.add(new BulkActionResponseDto.FailedItemDto(
-                        id, BadStatusCode.UNRESOLVED_ISSUE_EXISTS, issueTypesByItemId.get(id)));
+                        id, BadStatusCode.UNRESOLVED_ISSUE_EXISTS,
+                        itemIssues.stream().map(issue -> issue.getIssueType().name()).toList()));
+                continue;
+            }
+
+            boolean hasOtherUnresolvedIssue = !itemIssues.isEmpty();
+            if (hasOtherUnresolvedIssue && !memoProvided) {
+                failedList.add(new BulkActionResponseDto.FailedItemDto(
+                        id, BadStatusCode.APPROVAL_MEMO_REQUIRED,
+                        itemIssues.stream().map(issue -> issue.getIssueType().name()).toList()));
                 continue;
             }
 
@@ -137,9 +160,10 @@ public class InboxService {
         if (successIds.isEmpty()) {
             throw new CustomException(BadStatusCode.ALL_ITEMS_FAILED);
         }
-        //쿼리3
+
+        // 쿼리3,4: 승인 성공 항목들의 ChangeLog 일괄 저장
+        // (item.approve()로 인한 UPDATE는 dirty checking으로 트랜잭션 커밋 시 별도 발생)
         changeLogRepository.saveAll(logsToSave);
-        // 쿼리4
         return new BulkActionResponseDto(ids.size(), successIds.size(), failedList.size(), successIds, failedList);
     }
 
@@ -336,31 +360,14 @@ public class InboxService {
                 .orElse(null);
 
         boolean isDuplicate = (duplicatedTarget != null);
-
-        if (isDuplicate) {
-            if (duplicatedTarget.getDuplicatedGroup() != null) {
-                item.updateDuplicatedGroup(duplicatedTarget.getDuplicatedGroup());
-            } else {
-                DuplicatedGroup newGroup = DuplicatedGroup.create();
-                duplicatedGroupRepository.save(newGroup);
-                duplicatedTarget.updateDuplicatedGroup(newGroup);
-                item.updateDuplicatedGroup(newGroup);
-            }
-        } else {
-            item.updateDuplicatedGroup(null);
-        }
-
         handleDuplicatedGroup(item, duplicatedTarget, otherItems);
-
         boolean hasMissingField = !validator.validate(item).isEmpty();
-
         ReviewStatus reviewStatus = itemService.determineReviewStatus(item.getSpec(), item.getUnit(), isDuplicate);
 
         if (reviewStatus.equals(ReviewStatus.NEW) && hasMissingField) {
             reviewStatus = ReviewStatus.NEEDS_REVIEW;
         }
         item.updateReviewStatus(reviewStatus);
-
         updateItemIssues(item, isDuplicate, hasMissingField);
 
         List<ChangeLogCreateDto> createDtos = ChangeLogCreateDto.createList(beforeItem, item);
@@ -395,6 +402,7 @@ public class InboxService {
 
                 if (remainingItemsInGroup.size() == 1) {
                     Item lonelyItem = remainingItemsInGroup.get(0);
+                    lonelyItem.updateReviewStatus(ReviewStatus.NEW);
                     lonelyItem.updateDuplicatedGroup(null);
 
                     issueRepository.findByItemAndResolved(lonelyItem, false).stream()
@@ -448,5 +456,107 @@ public class InboxService {
 
     private boolean hasNoActiveIssue(List<Issue> unresolvedIssues, IssueType type) {
         return unresolvedIssues.stream().noneMatch(i -> i.getIssueType() == type);
+    }
+
+    // 삭제 서비스
+    @Transactional
+    public Void deleteDetailItem(Long id) {
+        Item item = itemRepository.findById(id).orElseThrow(
+                () -> new CustomException(BadStatusCode.ITEM_NOT_FOUND)
+        );
+
+        handleDuplicatedGroupOnDelete(item);
+
+        issueRepository.deleteByItem(item);
+        item.delete();
+
+        ChangeLog changeLog = ChangeLog.of(item, Action.DELETE);
+        changeLogRepository.save(changeLog);
+
+        return null;
+    }
+
+    private void handleDuplicatedGroupOnDelete(Item deletedItem) {
+        DuplicatedGroup targetGroup = deletedItem.getDuplicatedGroup();
+        if (targetGroup == null) {
+            return;
+        }
+
+        Long groupId = targetGroup.getId();
+
+        List<Item> remainingItemsInGroup = itemRepository.findAllByDeletedAtIsNullOrderByIdAsc().stream()
+                .filter(other -> !other.getId().equals(deletedItem.getId()))
+                .filter(other -> other.getDuplicatedGroup() != null)
+                .filter(other -> groupId.equals(other.getDuplicatedGroup().getId()))
+                .toList();
+
+        if (remainingItemsInGroup.size() == 1) {
+            Item lonelyItem = remainingItemsInGroup.get(0);
+
+            lonelyItem.updateDuplicatedGroup(null);
+
+            issueRepository.findByItemAndResolved(lonelyItem, false).stream()
+                    .filter(issue -> issue.getIssueType() == IssueType.DUPLICATE_SUSPECTED)
+                    .forEach(Issue::resolve);
+        }
+
+        deletedItem.updateDuplicatedGroup(null);
+    }
+
+    // 다건 bulk 삭제
+    @Transactional
+    public List<Long> deleteBulkItem(BulkItemDeleteRequestDto bulkItemDeleteRequestDto) {
+        List<Long> targetIds = bulkItemDeleteRequestDto.getIds();
+        if (targetIds == null || targetIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Item> targetItems = itemRepository.findAllById(targetIds);
+        if (targetItems.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        Set<Long> affectedGroupIds = targetItems.stream()
+                .map(Item::getDuplicatedGroup)
+                .filter(Objects::nonNull)
+                .map(DuplicatedGroup::getId)
+                .collect(Collectors.toSet());
+
+        issueRepository.deleteAllByItemIn(targetItems);
+
+        List<ChangeLog> changeLogs = new ArrayList<>();
+        for (Item item : targetItems) {
+            item.updateDuplicatedGroup(null); // 본인 그룹 연관관계 해제
+            item.delete();
+            changeLogs.add(ChangeLog.of(item, Action.DELETE));
+        }
+        changeLogRepository.saveAll(changeLogs);
+
+        if (!affectedGroupIds.isEmpty()) {
+            handleDuplicatedGroupsOnBulkDelete(affectedGroupIds);
+        }
+
+        return targetItems.stream().map(Item::getId).toList();
+    }
+
+    private void handleDuplicatedGroupsOnBulkDelete(Set<Long> affectedGroupIds) {
+        List<Item> activeItems = itemRepository.findAllByDeletedAtIsNullOrderByIdAsc();
+
+        for (Long groupId : affectedGroupIds) {
+            List<Item> remainingItems = activeItems.stream()
+                    .filter(item -> item.getDuplicatedGroup() != null)
+                    .filter(item -> groupId.equals(item.getDuplicatedGroup().getId()))
+                    .toList();
+
+            if (remainingItems.size() <= 1) {
+                for (Item lonelyItem : remainingItems) {
+                    lonelyItem.updateDuplicatedGroup(null);
+
+                    issueRepository.findByItemAndResolved(lonelyItem, false).stream()
+                            .filter(issue -> issue.getIssueType() == IssueType.DUPLICATE_SUSPECTED)
+                            .forEach(Issue::resolve);
+                }
+            }
+        }
     }
 }

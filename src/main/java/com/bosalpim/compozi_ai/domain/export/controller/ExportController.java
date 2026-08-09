@@ -6,6 +6,7 @@ import com.bosalpim.compozi_ai.domain.export.dto.response.ExportHistoryResponseD
 import com.bosalpim.compozi_ai.domain.export.entity.ExportHistory;
 import com.bosalpim.compozi_ai.domain.export.service.ExportService;
 import com.bosalpim.compozi_ai.general.response.ApiSuccess;
+import com.bosalpim.compozi_ai.general.response.PageResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Export API", description = "승인 항목 내보내기(JSON/CSV) 관련 API")
@@ -65,4 +67,16 @@ public class ExportController {
         String url = exportService.getDownloadUrl(exportHistoryId);
         return new DownloadUrlResponseDto(url);
     }
+
+    @GetMapping
+    @ApiSuccess(message = "내보내기 이력 불러오기 성공.")
+    public PageResponseDto<ExportHistoryResponseDto> getExportHistory(
+            @Parameter(description = "페이지 번호 (0부터 시작)")
+            @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기")
+            @RequestParam(defaultValue = "20") int size) {
+
+        return exportService.getHistories(page, size);
+    }
+
 }
