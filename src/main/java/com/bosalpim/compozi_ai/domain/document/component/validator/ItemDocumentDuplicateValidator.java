@@ -109,7 +109,7 @@ public class ItemDocumentDuplicateValidator {
         return new DuplicateValidationResult(existingDbMap, checkDtos);
     }
 
-    private String generateKey(Object... fields) {
+    public String generateKey(Object... fields) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < fields.length; i++) {
             sb.append(fields[i]);

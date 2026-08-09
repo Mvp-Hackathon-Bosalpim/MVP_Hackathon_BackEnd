@@ -113,15 +113,15 @@ public class ItemService {
         );
     }
 
-    private ReviewStatus determineReviewStatus(String spec, String unit, boolean isDuplicate) {
+    public ReviewStatus determineReviewStatus(String spec, String unit, boolean isDuplicate) {
         boolean hasSpecOrUnitIssue = itemSpecAndUnitValidator.isSpecMismatch(spec)
                 || itemSpecAndUnitValidator.isUnitMismatch(unit);
 
         return (hasSpecOrUnitIssue || isDuplicate) ? ReviewStatus.ON_HOLD : ReviewStatus.NEW;
     }
 
-    private void collectIssuesIfNeeded(Item item, String spec, String unit, Consumer<Issue> issueCollector,
-                                       boolean hasMissingField) {
+    public void collectIssuesIfNeeded(Item item, String spec, String unit, Consumer<Issue> issueCollector,
+                                      boolean hasMissingField) {
         if (itemSpecAndUnitValidator.isSpecMismatch(spec)) {
             issueCollector.accept(Issue.create(IssueType.SPEC_MISMATCH, "규격 불일치", false, item));
         }
