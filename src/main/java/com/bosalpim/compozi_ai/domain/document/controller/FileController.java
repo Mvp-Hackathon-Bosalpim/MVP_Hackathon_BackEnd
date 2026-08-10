@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -47,7 +48,7 @@ public class FileController {
     @ApiSuccess(statusCode = HttpStatus.CREATED, message = "수기 입력이 완료 되었습니다.")
     @ApiResponse(responseCode = "400", description = "필수 입력 값이 누락된 경우")
     @PostMapping("/manual-document")
-    public CreateItemDocumentResDto createManualFile(@RequestBody CreateManualItemDocumentListReqDto reqDto) {
+    public CreateItemDocumentResDto createManualFile(@Valid @RequestBody CreateManualItemDocumentListReqDto reqDto) {
         return fileService.createManualFile(reqDto);
     }
 }
