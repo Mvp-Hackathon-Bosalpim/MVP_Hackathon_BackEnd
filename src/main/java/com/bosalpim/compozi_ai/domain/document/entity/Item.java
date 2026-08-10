@@ -14,6 +14,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PostPersist;
@@ -33,7 +34,10 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
-@Table(name = "items", uniqueConstraints = @UniqueConstraint(columnNames = {"file_id", "doc_id"}))
+@Table(name = "items",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"file_id", "doc_id"}),
+        indexes = @Index(name = "idx_item_duplicate_check",
+                columnList = "supplier_name, normalized_item_name, spec, unit, price_before, price_after, effective_date"))
 public class Item {
 
     @Id

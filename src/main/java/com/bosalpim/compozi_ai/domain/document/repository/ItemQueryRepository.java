@@ -3,6 +3,7 @@ package com.bosalpim.compozi_ai.domain.document.repository;
 
 import com.bosalpim.compozi_ai.domain.document.entity.Item;
 import com.bosalpim.compozi_ai.domain.document.enums.ReviewStatus;
+import com.bosalpim.compozi_ai.domain.inbox.dto.response.DeletedItemResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemNavigationDto;
 import java.time.LocalDate;
 import java.util.List;
@@ -15,8 +16,9 @@ public interface ItemQueryRepository {
     Page<Item> searchItems(List<String> itemNames, List<String> supplierNames, LocalDate startDate,
                            LocalDate endDate, ReviewStatus reviewStatus, Pageable pageable);
 
-    Optional<ItemNavigationDto> findNavigationByIdExcludingStatuses(
-            Long targetId,
-            List<ReviewStatus> excludedStatuses
-    );
+    ItemNavigationDto findNavigationById(Long targetId);
+
+    List<DeletedItemResponseDto> findDeletedItems();
+
+    Optional<Item> findByIdWithFile(Long id);
 }
