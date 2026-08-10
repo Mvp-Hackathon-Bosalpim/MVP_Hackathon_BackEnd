@@ -348,19 +348,19 @@ public class InboxService {
         return new PageResponseDto<>(page);
     }
 
-    @Transactional(readOnly = true) // TODO : 조회 성능 개선 필요
+    @Transactional(readOnly = true)
     public ItemDetailResponseDto getDetailItem(Long id) {
-        Item item = itemRepository.findById(id).
-                orElseThrow(() -> new CustomException(BadStatusCode.ITEM_NOT_FOUND));
-        List<Issue> issues = issueRepository.findByItemIdAndResolvedFalse(item.getId());
+        Item item = itemRepository.findByIdWithFile(id)
+                .orElseThrow(() -> new CustomException(BadStatusCode.ITEM_NOT_FOUND));
+
+        List<Issue> issues = issueRepository.findUnresolvedByItemId(item.getId());
         List<IssueType> exceptionFlags = issues.stream()
                 .map(Issue::getIssueType)
                 .toList();
+
         List<ChangeLog> changeLog = changeLogRepository.findAllByItemId(item.getId());
-        ItemNavigationDto navigationDto = itemRepository.findNavigationByIdExcludingStatuses(item.getId(),
-                List.of(ReviewStatus.APPROVED, ReviewStatus.REJECTED)).orElseThrow(
-                () -> new CustomException(BadStatusCode.ITEM_NOT_FOUND)
-        );
+
+        ItemNavigationDto navigationDto = itemRepository.findNavigationById(item.getId());
 
         return ItemDetailResponseDto.of(item, exceptionFlags, changeLog, navigationDto);
     }

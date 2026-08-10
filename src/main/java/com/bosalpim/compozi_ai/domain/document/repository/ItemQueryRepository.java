@@ -16,10 +16,9 @@ public interface ItemQueryRepository {
     Page<Item> searchItems(List<String> itemNames, List<String> supplierNames, LocalDate startDate,
                            LocalDate endDate, ReviewStatus reviewStatus, Pageable pageable);
 
-    Optional<ItemNavigationDto> findNavigationByIdExcludingStatuses(
-            Long targetId,
-            List<ReviewStatus> excludedStatuses
-    );
+    ItemNavigationDto findNavigationById(Long targetId);
 
     List<DeletedItemResponseDto> findDeletedItems();
+
+    Optional<Item> findByIdWithFile(Long id);
 }

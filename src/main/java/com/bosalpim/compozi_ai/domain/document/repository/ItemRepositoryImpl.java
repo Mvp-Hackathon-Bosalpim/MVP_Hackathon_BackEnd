@@ -1,13 +1,16 @@
 package com.bosalpim.compozi_ai.domain.document.repository;
 
+import static com.bosalpim.compozi_ai.domain.document.entity.QFile.file;
 import static com.bosalpim.compozi_ai.domain.document.entity.QItem.item;
 
 import com.bosalpim.compozi_ai.domain.document.entity.Item;
 import com.bosalpim.compozi_ai.domain.document.enums.ReviewStatus;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.DeletedItemResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemNavigationDto;
+import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.LocalDate;
 import java.util.List;
@@ -56,63 +59,59 @@ public class ItemRepositoryImpl implements ItemQueryRepository {
     }
 
     @Override
-    public Optional<ItemNavigationDto> findNavigationByIdExcludingStatuses(Long targetId,
-                                                                           List<ReviewStatus> excludedStatuses) {
-        Integer exists = queryFactory
-                .selectOne()
-                .from(item)
-                .where(
-                        item.id.eq(targetId),
-                        item.deletedAt.isNull()
-                ).fetchFirst();
-
-        if (exists == null) {
-            return Optional.empty();
-        }
-        Long prevId = queryFactory
-                .select(item.id)
-                .from(item)
-                .where(
-                        item.deletedAt.isNull(),
-                        item.id.lt(targetId)
+    public ItemNavigationDto findNavigationById(Long targetId) {
+        Tuple result = queryFactory
+                .select(new CaseBuilder().when(item.id.lt(targetId)).then(item.id).otherwise((Long) null).max(),
+                        new CaseBuilder().when(item.id.gt(targetId)).then(item.id).otherwise((Long) null).min(),
+                        item.count(),
+                        new CaseBuilder().when(item.id.lt(targetId)).then(1L).otherwise(0L).sum()
                 )
-                .orderBy(item.id.desc())
-                .fetchFirst();
-
-        Long nextId = queryFactory
-                .select(item.id)
-                .from(item)
-                .where(
-                        item.deletedAt.isNull(),
-                        item.id.gt(targetId)
-                )
-                .orderBy(item.id.asc())
-                .fetchFirst();
-
-        Long targetIndex = queryFactory
-                .select(item.count())
-                .from(item)
-                .where(
-                        item.deletedAt.isNull(),
-                        item.id.lt(targetId)
-                )
-                .fetchOne();
-
-        Long totalCount = queryFactory
-                .select(item.count())
                 .from(item)
                 .where(item.deletedAt.isNull())
                 .fetchOne();
 
-        return Optional.of(ItemNavigationDto.builder()
+        Long prevId = result.get(0, Long.class);
+        Long nextId = result.get(1, Long.class);
+        Long totalCount = result.get(2, Long.class);
+        Long countBeforeTarget = result.get(3, Long.class);
+
+        return ItemNavigationDto.builder()
                 .targetId(targetId)
-                .targetIndex(targetIndex != null ? targetIndex + 1L : 1L)
+                .targetIndex(countBeforeTarget != null ? countBeforeTarget + 1L : 1L)
                 .prevId(prevId)
                 .nextId(nextId)
                 .totalCount(totalCount != null ? totalCount : 0L)
-                .build());
+                .build();
     }
 
+    @Override
+    public List<DeletedItemResponseDto> findDeletedItems() {
+        return queryFactory
+                .select(Projections.constructor(DeletedItemResponseDto.class,
+                        item.id,
+                        item.docId,
+                        item.sourceType,
+                        item.supplierName,
+                        item.normalizedItemName,
+                        item.spec,
+                        item.priceBefore,
+                        item.priceAfter,
+                        item.effectiveDate))
+                .from(item)
+                .where(item.deletedAt.isNotNull())
+                .fetch();
+    }
+
+    @Override
+    public Optional<Item> findByIdWithFile(Long id) {
+        Item result = queryFactory.selectFrom(item)
+                .leftJoin(item.file, file).fetchJoin()
+                .where(item.id.eq(id))
+                .fetchOne();
+        return Optional.ofNullable(result);
+    }
+
+//    == 쿼리 dsl 편의 메서드 == //
 
     private BooleanExpression itemNameIn(List<String> itemNames) {
         return (itemNames == null || itemNames.isEmpty()) ? null : item.normalizedItemName.in(itemNames);
@@ -140,21 +139,4 @@ public class ItemRepositoryImpl implements ItemQueryRepository {
     }
 
 
-    @Override
-    public List<DeletedItemResponseDto> findDeletedItems() {
-        return queryFactory
-                .select(Projections.constructor(DeletedItemResponseDto.class,
-                        item.id,
-                        item.docId,
-                        item.sourceType,
-                        item.supplierName,
-                        item.normalizedItemName,
-                        item.spec,
-                        item.priceBefore,
-                        item.priceAfter,
-                        item.effectiveDate))
-                .from(item)
-                .where(item.deletedAt.isNotNull())
-                .fetch();
-    }
 }
