@@ -1,14 +1,10 @@
 package com.bosalpim.compozi_ai.domain.inbox.dto.request;
 
-
-import java.util.List;
 import lombok.Builder;
 import lombok.Getter;
 
 @Getter
 @Builder
-public class BulkItemDeleteRequestDto {
-
-    private List<Long> ids;
+public class ItemDeleteRequestDto {
     private String memo;
 }

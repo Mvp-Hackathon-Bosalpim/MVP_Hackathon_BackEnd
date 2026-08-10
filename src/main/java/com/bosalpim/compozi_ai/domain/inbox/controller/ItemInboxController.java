@@ -3,13 +3,17 @@ package com.bosalpim.compozi_ai.domain.inbox.controller;
 import com.bosalpim.compozi_ai.domain.document.enums.ReviewStatus;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.BulkIdsRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.BulkItemDeleteRequestDto;
+import com.bosalpim.compozi_ai.domain.inbox.dto.request.ItemDeleteRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.ItemSearchRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.ItemUpdateRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.MemoRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.BulkActionResponseDto;
+import com.bosalpim.compozi_ai.domain.inbox.dto.response.DeletedItemResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemActionResponseDto;
+import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemDeleteResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemDetailResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemListResponseDto;
+import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemUpdateResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.StatusCountResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.service.InboxService;
 import com.bosalpim.compozi_ai.general.response.ApiSuccess;
@@ -208,7 +212,7 @@ public class ItemInboxController {
     @Operation(summary = "품목 단건 수정", description = "품목 (item) id 를 기반으로 특정 품목을 수정요청 한다.")
     @ApiSuccess(message = "특정 구매 품목 수정 성공")
     @PatchMapping("/documents/{id}")
-    public Void updateDetailItem(
+    public ItemUpdateResponseDto updateDetailItem(
             @Parameter(description = "품목 ID", required = true)
             @PathVariable Long id,
             @Parameter(description = "수정 내용", required = true)
@@ -222,17 +226,19 @@ public class ItemInboxController {
     @Operation(summary = "품목 단건 삭제", description = "품목 (item) id 를 기반으로 특정 품목을 삭제요청 한다.")
     @ApiSuccess(message = "특정 구매 품목 삭제 성공")
     @DeleteMapping("/documents/{id}")
-    public Void deleteDetailItem(
+    public ItemDeleteResponseDto deleteDetailItem(
             @Parameter(description = "품목 ID", required = true)
-            @PathVariable Long id
+            @PathVariable Long id,
+            @Parameter(description = "삭제 이유", required = true)
+            @RequestBody ItemDeleteRequestDto deleteRequestDto
     ) {
-        return inboxService.deleteDetailItem(id);
+        return inboxService.deleteDetailItem(id, deleteRequestDto);
     }
 
     @Operation(summary = "품목 다건 삭제", description = "품목 (item) id 를 기반으로 다건(bulk) 삭제요청 한다.")
     @ApiSuccess(message = "구매 품목 다건 삭제 성공")
     @DeleteMapping("/documents")
-    public List<Long> deleteDetailItem(
+    public List<ItemDeleteResponseDto> deleteBulkItem(
             @Parameter(description = "품목 ID 리스트", required = true)
             @RequestBody BulkItemDeleteRequestDto bulkItemDeleteRequestDto
     ) {
@@ -252,4 +258,10 @@ public class ItemInboxController {
         return inboxService.searchItemsWithDuplicatedGroupId(id, pageable);
     }
 
+    @Operation(summary = "삭제된 품목 목록 조회", description = "소프트 삭제된(deleted_at이 not null인) 품목의 기본 정보와 삭제 사유(memo)를 함께 조회한다.")
+    @ApiSuccess(message = "삭제 목록 불러오기 성공")
+    @GetMapping("/items/deleted")
+    public List<DeletedItemResponseDto> getDeletedItems() {
+        return inboxService.getDeletedItems();
+    }
 }

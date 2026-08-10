@@ -4,25 +4,29 @@ import com.bosalpim.compozi_ai.domain.document.component.validator.ItemDocumentD
 import com.bosalpim.compozi_ai.domain.document.component.validator.ItemSpecAndUnitValidator;
 import com.bosalpim.compozi_ai.domain.document.entity.Item;
 import com.bosalpim.compozi_ai.domain.document.enums.ReviewStatus;
-import com.bosalpim.compozi_ai.domain.document.repository.ItemRepository;
+import com.bosalpim.compozi_ai.domain.document.repository.item.ItemRepository;
 import com.bosalpim.compozi_ai.domain.document.service.ItemService;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.BulkItemDeleteRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.ChangeLogCreateDto;
+import com.bosalpim.compozi_ai.domain.inbox.dto.request.ItemDeleteRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.ItemSnapshotDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.ItemUpdateRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.BulkActionResponseDto;
+import com.bosalpim.compozi_ai.domain.inbox.dto.response.DeletedItemResponseDto;
+import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemDeleteResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemDetailResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemListResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemNavigationDto;
+import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemUpdateResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.StatusCountResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.entity.ChangeLog;
 import com.bosalpim.compozi_ai.domain.inbox.entity.DuplicatedGroup;
 import com.bosalpim.compozi_ai.domain.inbox.entity.Issue;
 import com.bosalpim.compozi_ai.domain.inbox.enums.Action;
 import com.bosalpim.compozi_ai.domain.inbox.enums.IssueType;
-import com.bosalpim.compozi_ai.domain.inbox.repository.ChangeLogRepository;
 import com.bosalpim.compozi_ai.domain.inbox.repository.DuplicatedGroupRepository;
-import com.bosalpim.compozi_ai.domain.inbox.repository.IssueRepository;
+import com.bosalpim.compozi_ai.domain.inbox.repository.change_log.ChangeLogRepository;
+import com.bosalpim.compozi_ai.domain.inbox.repository.issue.IssueRepository;
 import com.bosalpim.compozi_ai.general.enums.BadStatusCode;
 import com.bosalpim.compozi_ai.general.exception.CustomException;
 import com.bosalpim.compozi_ai.general.response.PageResponseDto;
@@ -53,6 +57,25 @@ public class InboxService {
     private final ItemDocumentDuplicateValidator itemDocumentDuplicateValidator;
     private final Validator validator;
 
+    @Transactional(readOnly = true)
+    public List<DeletedItemResponseDto> getDeletedItems() {
+        List<DeletedItemResponseDto> deletedItems = itemRepository.findDeletedItems();
+        if (deletedItems.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> itemIds = deletedItems.stream()
+                .map(DeletedItemResponseDto::getId)
+                .toList();
+
+        Map<Long, String> memoByItemId = changeLogRepository.findAllByItemIdIn(itemIds).stream()
+                .collect(Collectors.toMap(cl -> cl.getItem().getId(), ChangeLog::getMemo));
+
+        return deletedItems.stream()
+                .map(dto -> dto.toBuilder().memo(memoByItemId.get(dto.getId())).build())
+                .toList();
+
+    }
 
     @Transactional
     public Long approve(Long id, String memo) {
@@ -277,13 +300,16 @@ public class InboxService {
 
     @Transactional(readOnly = true)
     public StatusCountResponseDto getStatusCounts() {
-        long newCount = itemRepository.countByReviewStatusAndDeletedAtIsNull(ReviewStatus.NEW);
-        long needsReviewCount = itemRepository.countByReviewStatusAndDeletedAtIsNull(ReviewStatus.NEEDS_REVIEW);
-        long onHoldCount = itemRepository.countByReviewStatusAndDeletedAtIsNull(ReviewStatus.ON_HOLD);
-        long approvedCount = itemRepository.countByReviewStatusAndDeletedAtIsNull(ReviewStatus.APPROVED);
-        long rejectedCount = itemRepository.countByReviewStatusAndDeletedAtIsNull(ReviewStatus.REJECTED);
+        Map<ReviewStatus, Long> counts = itemRepository.countGroupByReviewStatus().stream()
+                .collect(Collectors.toMap(row -> (ReviewStatus) row[0], row -> (Long) row[1]));
 
-        return new StatusCountResponseDto(newCount, needsReviewCount, onHoldCount, approvedCount, rejectedCount);
+        return new StatusCountResponseDto(
+                counts.getOrDefault(ReviewStatus.NEW, 0L),
+                counts.getOrDefault(ReviewStatus.NEEDS_REVIEW, 0L),
+                counts.getOrDefault(ReviewStatus.ON_HOLD, 0L),
+                counts.getOrDefault(ReviewStatus.APPROVED, 0L),
+                counts.getOrDefault(ReviewStatus.REJECTED, 0L)
+        );
     }
 
     @Transactional(readOnly = true)
@@ -322,28 +348,29 @@ public class InboxService {
         return new PageResponseDto<>(page);
     }
 
-    @Transactional(readOnly = true) // TODO : 조회 성능 개선 필요
+    @Transactional(readOnly = true)
     public ItemDetailResponseDto getDetailItem(Long id) {
-        Item item = itemRepository.findById(id).
-                orElseThrow(() -> new CustomException(BadStatusCode.ITEM_NOT_FOUND));
-        List<Issue> issues = issueRepository.findByItemIdAndResolvedFalse(item.getId());
+        Item item = itemRepository.findByIdWithFile(id)
+                .orElseThrow(() -> new CustomException(BadStatusCode.ITEM_NOT_FOUND));
+
+        List<Issue> issues = issueRepository.findUnresolvedByItemId(item.getId());
         List<IssueType> exceptionFlags = issues.stream()
                 .map(Issue::getIssueType)
                 .toList();
+
         List<ChangeLog> changeLog = changeLogRepository.findAllByItemId(item.getId());
-        ItemNavigationDto navigationDto = itemRepository.findNavigationByIdExcludingStatuses(item.getId(),
-                List.of(ReviewStatus.APPROVED, ReviewStatus.REJECTED)).orElseThrow(
-                () -> new CustomException(BadStatusCode.ITEM_NOT_FOUND)
-        );
+
+        ItemNavigationDto navigationDto = itemRepository.findNavigationById(item.getId());
 
         return ItemDetailResponseDto.of(item, exceptionFlags, changeLog, navigationDto);
     }
 
     // 아래 코드는 업데이트 시 수정 로직 (item 변경, 중복, 빈 칸, 단위 * 규격 불일치, 탐지 및 이슈화, 그리고 change_log 생성)
     @Transactional
-    public Void updateDetailItem(Long id, ItemUpdateRequestDto reqDto) {
-        Item item = itemRepository.findById(id).
-                orElseThrow(() -> new CustomException(BadStatusCode.ITEM_NOT_FOUND));
+    public ItemUpdateResponseDto updateDetailItem(Long id, ItemUpdateRequestDto reqDto) {
+        Item item = itemRepository.findByIdAndDeletedAtIsNull(id,
+                        List.of(ReviewStatus.APPROVED, ReviewStatus.REJECTED)).
+                orElseThrow(() -> new CustomException(BadStatusCode.ITEM_CANNOT_UPDATE));
 
         ItemSnapshotDto beforeItem = ItemSnapshotDto.create(item);
 
@@ -384,7 +411,7 @@ public class InboxService {
                 .toList();
         changeLogRepository.saveAll(changeLogs);
 
-        return null;
+        return ItemUpdateResponseDto.update(item);
     }
 
 
@@ -468,20 +495,21 @@ public class InboxService {
 
     // 삭제 서비스
     @Transactional
-    public Void deleteDetailItem(Long id) {
-        Item item = itemRepository.findById(id).orElseThrow(
-                () -> new CustomException(BadStatusCode.ITEM_NOT_FOUND)
-        );
+    public ItemDeleteResponseDto deleteDetailItem(Long id, ItemDeleteRequestDto requestDto) {
+        Item item = itemRepository.findByIdAndDeletedAtIsNull(id, List.of(ReviewStatus.APPROVED, ReviewStatus.REJECTED))
+                .orElseThrow(
+                        () -> new CustomException(BadStatusCode.ITEM_CANNOT_REMOVE)
+                );
 
         handleDuplicatedGroupOnDelete(item);
 
         issueRepository.deleteByItem(item);
         item.delete();
 
-        ChangeLog changeLog = ChangeLog.of(item, Action.DELETE);
+        ChangeLog changeLog = ChangeLog.of(item, Action.DELETE, requestDto.getMemo());
         changeLogRepository.save(changeLog);
 
-        return null;
+        return ItemDeleteResponseDto.delete(item, requestDto.getMemo());
     }
 
     private void handleDuplicatedGroupOnDelete(Item deletedItem) {
@@ -490,17 +518,11 @@ public class InboxService {
             return;
         }
 
-        Long groupId = targetGroup.getId();
-
-        List<Item> remainingItemsInGroup = itemRepository.findAllByDeletedAtIsNullOrderByIdAsc().stream()
-                .filter(other -> !other.getId().equals(deletedItem.getId()))
-                .filter(other -> other.getDuplicatedGroup() != null)
-                .filter(other -> groupId.equals(other.getDuplicatedGroup().getId()))
-                .toList();
+        List<Item> remainingItemsInGroup =
+                itemRepository.findByDuplicatedGroupIdAndDeletedAtIsNull(targetGroup.getId(), deletedItem.getId());
 
         if (remainingItemsInGroup.size() == 1) {
             Item lonelyItem = remainingItemsInGroup.get(0);
-
             lonelyItem.updateDuplicatedGroup(null);
 
             issueRepository.findByItemAndResolved(lonelyItem, false).stream()
@@ -513,15 +535,33 @@ public class InboxService {
 
     // 다건 bulk 삭제
     @Transactional
-    public List<Long> deleteBulkItem(BulkItemDeleteRequestDto bulkItemDeleteRequestDto) {
+    public List<ItemDeleteResponseDto> deleteBulkItem(BulkItemDeleteRequestDto bulkItemDeleteRequestDto) {
         List<Long> targetIds = bulkItemDeleteRequestDto.getIds();
         if (targetIds == null || targetIds.isEmpty()) {
             return Collections.emptyList();
         }
 
-        List<Item> targetItems = itemRepository.findAllById(targetIds);
+        List<Item> targetItems = itemRepository.findAllByIdInAndDeletedAtIsNull(targetIds,
+                List.of(ReviewStatus.APPROVED, ReviewStatus.REJECTED));
+
         if (targetItems.isEmpty()) {
-            return Collections.emptyList();
+            throw new CustomException(BadStatusCode.NO_ITEM_CONTENT);
+        }
+
+        // ----------------- bulk 삭제 요청 시 해당 id 값이 없거나 삭제된 경우 ----------------
+        // item set 구성
+        Set<Long> validItemIds = targetItems.stream()
+                .map(Item::getId)
+                .collect(Collectors.toSet());
+
+        // 요청된 ID 중 DB에 없거나 이미 삭제된 ID 추출
+        List<Long> invalidIds = targetIds.stream()
+                .filter(id -> !validItemIds.contains(id))
+                .toList();
+
+        // 하나라도 유효하지 않은 ID가 존재하면 예외 발생 (전체 Rollback)
+        if (!invalidIds.isEmpty()) {
+            throw new CustomException(BadStatusCode.ITEM_CANNOT_REMOVE);
         }
 
         Set<Long> affectedGroupIds = targetItems.stream()
@@ -536,7 +576,7 @@ public class InboxService {
         for (Item item : targetItems) {
             item.updateDuplicatedGroup(null); // 본인 그룹 연관관계 해제
             item.delete();
-            changeLogs.add(ChangeLog.of(item, Action.DELETE));
+            changeLogs.add(ChangeLog.of(item, Action.DELETE, bulkItemDeleteRequestDto.getMemo()));
         }
         changeLogRepository.saveAll(changeLogs);
 
@@ -544,26 +584,26 @@ public class InboxService {
             handleDuplicatedGroupsOnBulkDelete(affectedGroupIds);
         }
 
-        return targetItems.stream().map(Item::getId).toList();
+        return targetItems.stream().map(
+                item -> ItemDeleteResponseDto.delete(item, bulkItemDeleteRequestDto.getMemo())
+        ).toList();
     }
 
     private void handleDuplicatedGroupsOnBulkDelete(Set<Long> affectedGroupIds) {
-        List<Item> activeItems = itemRepository.findAllByDeletedAtIsNullOrderByIdAsc();
+        List<Item> remainingItems = itemRepository.findByDuplicatedGroupIdInAndDeletedAtIsNull(affectedGroupIds);
+
+        Map<Long, List<Item>> remainingByGroupId = remainingItems.stream()
+                .collect(Collectors.groupingBy(i -> i.getDuplicatedGroup().getId()));
 
         for (Long groupId : affectedGroupIds) {
-            List<Item> remainingItems = activeItems.stream()
-                    .filter(item -> item.getDuplicatedGroup() != null)
-                    .filter(item -> groupId.equals(item.getDuplicatedGroup().getId()))
-                    .toList();
+            List<Item> remaining = remainingByGroupId.getOrDefault(groupId, List.of());
+            if (remaining.size() == 1) {
+                Item lonelyItem = remaining.get(0);
+                lonelyItem.updateDuplicatedGroup(null);
 
-            if (remainingItems.size() <= 1) {
-                for (Item lonelyItem : remainingItems) {
-                    lonelyItem.updateDuplicatedGroup(null);
-
-                    issueRepository.findByItemAndResolved(lonelyItem, false).stream()
-                            .filter(issue -> issue.getIssueType() == IssueType.DUPLICATE_SUSPECTED)
-                            .forEach(Issue::resolve);
-                }
+                issueRepository.findByItemAndResolved(lonelyItem, false).stream()
+                        .filter(issue -> issue.getIssueType() == IssueType.DUPLICATE_SUSPECTED)
+                        .forEach(Issue::resolve);
             }
         }
     }
