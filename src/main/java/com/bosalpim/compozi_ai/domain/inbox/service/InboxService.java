@@ -344,8 +344,9 @@ public class InboxService {
     // 아래 코드는 업데이트 시 수정 로직 (item 변경, 중복, 빈 칸, 단위 * 규격 불일치, 탐지 및 이슈화, 그리고 change_log 생성)
     @Transactional
     public ItemUpdateResponseDto updateDetailItem(Long id, ItemUpdateRequestDto reqDto) {
-        Item item = itemRepository.findById(id).
-                orElseThrow(() -> new CustomException(BadStatusCode.ITEM_NOT_FOUND));
+        Item item = itemRepository.findByIdAndDeletedAtIsNull(id,
+                        List.of(ReviewStatus.APPROVED, ReviewStatus.REJECTED)).
+                orElseThrow(() -> new CustomException(BadStatusCode.ITEM_CANNOT_UPDATE));
 
         ItemSnapshotDto beforeItem = ItemSnapshotDto.create(item);
 
