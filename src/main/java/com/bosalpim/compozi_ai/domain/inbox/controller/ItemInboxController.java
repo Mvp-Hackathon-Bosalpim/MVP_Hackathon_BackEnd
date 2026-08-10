@@ -8,8 +8,10 @@ import com.bosalpim.compozi_ai.domain.inbox.dto.request.ItemUpdateRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.MemoRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.BulkActionResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemActionResponseDto;
+import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemDeleteResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemDetailResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemListResponseDto;
+import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemUpdateResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.StatusCountResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.service.InboxService;
 import com.bosalpim.compozi_ai.general.response.ApiSuccess;
@@ -208,7 +210,7 @@ public class ItemInboxController {
     @Operation(summary = "품목 단건 수정", description = "품목 (item) id 를 기반으로 특정 품목을 수정요청 한다.")
     @ApiSuccess(message = "특정 구매 품목 수정 성공")
     @PatchMapping("/documents/{id}")
-    public Void updateDetailItem(
+    public ItemUpdateResponseDto updateDetailItem(
             @Parameter(description = "품목 ID", required = true)
             @PathVariable Long id,
             @Parameter(description = "수정 내용", required = true)
@@ -222,7 +224,7 @@ public class ItemInboxController {
     @Operation(summary = "품목 단건 삭제", description = "품목 (item) id 를 기반으로 특정 품목을 삭제요청 한다.")
     @ApiSuccess(message = "특정 구매 품목 삭제 성공")
     @DeleteMapping("/documents/{id}")
-    public Void deleteDetailItem(
+    public ItemDeleteResponseDto deleteDetailItem(
             @Parameter(description = "품목 ID", required = true)
             @PathVariable Long id
     ) {
@@ -232,7 +234,7 @@ public class ItemInboxController {
     @Operation(summary = "품목 다건 삭제", description = "품목 (item) id 를 기반으로 다건(bulk) 삭제요청 한다.")
     @ApiSuccess(message = "구매 품목 다건 삭제 성공")
     @DeleteMapping("/documents")
-    public List<Long> deleteDetailItem(
+    public List<ItemDeleteResponseDto> deleteBulkItem(
             @Parameter(description = "품목 ID 리스트", required = true)
             @RequestBody BulkItemDeleteRequestDto bulkItemDeleteRequestDto
     ) {

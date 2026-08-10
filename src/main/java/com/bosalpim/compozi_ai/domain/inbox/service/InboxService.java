@@ -11,9 +11,11 @@ import com.bosalpim.compozi_ai.domain.inbox.dto.request.ChangeLogCreateDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.ItemSnapshotDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.ItemUpdateRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.BulkActionResponseDto;
+import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemDeleteResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemDetailResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemListResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemNavigationDto;
+import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemUpdateResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.StatusCountResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.entity.ChangeLog;
 import com.bosalpim.compozi_ai.domain.inbox.entity.DuplicatedGroup;
@@ -341,7 +343,7 @@ public class InboxService {
 
     // 아래 코드는 업데이트 시 수정 로직 (item 변경, 중복, 빈 칸, 단위 * 규격 불일치, 탐지 및 이슈화, 그리고 change_log 생성)
     @Transactional
-    public Void updateDetailItem(Long id, ItemUpdateRequestDto reqDto) {
+    public ItemUpdateResponseDto updateDetailItem(Long id, ItemUpdateRequestDto reqDto) {
         Item item = itemRepository.findById(id).
                 orElseThrow(() -> new CustomException(BadStatusCode.ITEM_NOT_FOUND));
 
@@ -384,7 +386,7 @@ public class InboxService {
                 .toList();
         changeLogRepository.saveAll(changeLogs);
 
-        return null;
+        return ItemUpdateResponseDto.update(item);
     }
 
 
@@ -468,7 +470,7 @@ public class InboxService {
 
     // 삭제 서비스
     @Transactional
-    public Void deleteDetailItem(Long id) {
+    public ItemDeleteResponseDto deleteDetailItem(Long id) {
         Item item = itemRepository.findById(id).orElseThrow(
                 () -> new CustomException(BadStatusCode.ITEM_NOT_FOUND)
         );
@@ -481,7 +483,7 @@ public class InboxService {
         ChangeLog changeLog = ChangeLog.of(item, Action.DELETE);
         changeLogRepository.save(changeLog);
 
-        return null;
+        return ItemDeleteResponseDto.delete(item);
     }
 
     private void handleDuplicatedGroupOnDelete(Item deletedItem) {
@@ -513,7 +515,7 @@ public class InboxService {
 
     // 다건 bulk 삭제
     @Transactional
-    public List<Long> deleteBulkItem(BulkItemDeleteRequestDto bulkItemDeleteRequestDto) {
+    public List<ItemDeleteResponseDto> deleteBulkItem(BulkItemDeleteRequestDto bulkItemDeleteRequestDto) {
         List<Long> targetIds = bulkItemDeleteRequestDto.getIds();
         if (targetIds == null || targetIds.isEmpty()) {
             return Collections.emptyList();
@@ -544,7 +546,7 @@ public class InboxService {
             handleDuplicatedGroupsOnBulkDelete(affectedGroupIds);
         }
 
-        return targetItems.stream().map(Item::getId).toList();
+        return targetItems.stream().map(ItemDeleteResponseDto::delete).toList();
     }
 
     private void handleDuplicatedGroupsOnBulkDelete(Set<Long> affectedGroupIds) {
