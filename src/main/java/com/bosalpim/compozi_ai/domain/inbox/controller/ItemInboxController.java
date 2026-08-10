@@ -24,6 +24,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -216,7 +217,7 @@ public class ItemInboxController {
             @Parameter(description = "품목 ID", required = true)
             @PathVariable Long id,
             @Parameter(description = "수정 내용", required = true)
-            @RequestBody ItemUpdateRequestDto reqDto
+            @Valid @RequestBody ItemUpdateRequestDto reqDto
     ) {
 
         return inboxService.updateDetailItem(id, reqDto);

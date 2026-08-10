@@ -19,4 +19,9 @@ public class ApiResponse<T> {
     public static ApiResponse<?> fail(int code, String message) {
         return new ApiResponse<>("FAIL", code, message, null);
     }
+
+    //  에러 상세 데이터(errors Map 등)를 반환할 수 있도록 추가
+    public static <T> ApiResponse<T> fail(int code, String message, T data) {
+        return new ApiResponse<>("FAIL", code, message, data);
+    }
 }
