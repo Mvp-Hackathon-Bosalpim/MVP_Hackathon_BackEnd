@@ -6,7 +6,6 @@ import com.bosalpim.compozi_ai.general.exception.CustomException;
 import com.opencsv.CSVReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.stereotype.Component;
@@ -39,17 +38,20 @@ public class CsvParser implements FileParser {
                     continue;
                 }
 
+                ParseCsvValueHelper.ParseContext context = new ParseCsvValueHelper.ParseContext();
+
                 CreateCommonItemDocumentReqDto dto = CreateCommonItemDocumentReqDto.builder()
                         .rowNo((long) i)
-                        .docId(getStringValue(row, 0))
-                        .sourceType(getStringValue(row, 1))
-                        .supplierName(getStringValue(row, 2))
-                        .rawItemName(getStringValue(row, 3))
-                        .spec(getStringValue(row, 4))
-                        .unit(getStringValue(row, 5))
-                        .priceBefore(getLongValue(row, 6))
-                        .priceAfter(getLongValue(row, 7))
-                        .effectiveDate(getDateValue(row, 8))
+                        .docId(ParseCsvValueHelper.parseString(getValue(row, 0)))
+                        .sourceType(ParseCsvValueHelper.parseString(getValue(row, 1)))
+                        .supplierName(ParseCsvValueHelper.parseString(getValue(row, 2)))
+                        .rawItemName(ParseCsvValueHelper.parseString(getValue(row, 3)))
+                        .spec(ParseCsvValueHelper.parseString(getValue(row, 4)))
+                        .unit(ParseCsvValueHelper.parseString(getValue(row, 5)))
+                        .priceBefore(ParseCsvValueHelper.parseLong(getValue(row, 6), context))
+                        .priceAfter(ParseCsvValueHelper.parseLong(getValue(row, 7), context))
+                        .effectiveDate(ParseCsvValueHelper.parseDate(getValue(row, 8), context))
+                        .hasParseError(context.hasError())
                         .build();
 
                 list.add(dto);
@@ -62,30 +64,9 @@ public class CsvParser implements FileParser {
         return list;
     }
 
-    // Array IndexOutOfBoundsException 방지 및 문자열 정제
-    private String getStringValue(String[] row, int index) {
-        if (index >= row.length || row[index] == null) {
-            return null;
-        }
-        String val = row[index].trim();
-        return val.isBlank() ? null : val;
+    private String getValue(String[] row, int index) {
+        return (index < row.length) ? row[index] : null;
     }
 
-    // Long 숫자로 변환 (콤마 제거)
-    private Long getLongValue(String[] row, int index) {
-        String val = getStringValue(row, index);
-        if (val == null) {
-            return null;
-        }
-        return Long.parseLong(val.replace(",", ""));
-    }
 
-    // LocalDate 날짜로 변환 (2026-08-01 또는 2026/08/01)
-    private LocalDate getDateValue(String[] row, int index) {
-        String val = getStringValue(row, index);
-        if (val == null) {
-            return null;
-        }
-        return LocalDate.parse(val.replace("/", "-"));
-    }
 }

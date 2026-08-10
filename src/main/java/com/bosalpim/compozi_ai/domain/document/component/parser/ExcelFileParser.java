@@ -4,13 +4,10 @@ import com.bosalpim.compozi_ai.domain.document.dto.request.commonFile.CreateComm
 import com.bosalpim.compozi_ai.general.enums.BadStatusCode;
 import com.bosalpim.compozi_ai.general.exception.CustomException;
 import java.io.InputStream;
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
-import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -35,21 +32,23 @@ public class ExcelFileParser implements FileParser {
 
             Sheet sheet = workbook.getSheetAt(0);
             for (Row row : sheet) {
-                if (row.getRowNum() == 0) {
-                    continue; // 헤더 제외
+                if (row.getRowNum() == 0 || isRowEmpty(row)) {
+                    continue; // 헤더 제외 및 빈 행 제외
                 }
 
+                ParseXlsxValueHelper.ParseContext context = new ParseXlsxValueHelper.ParseContext();
                 CreateCommonItemDocumentReqDto dto = CreateCommonItemDocumentReqDto.builder()
                         .rowNo((long) row.getRowNum())
-                        .docId(getStringValue(row.getCell(0)))
-                        .sourceType(getStringValue(row.getCell(1)))
-                        .supplierName(getStringValue(row.getCell(2)))
-                        .rawItemName(getStringValue(row.getCell(3)))
-                        .spec(getStringValue(row.getCell(4)))
-                        .unit(getStringValue(row.getCell(5)))
-                        .priceBefore(getLongValue(row.getCell(6)))
-                        .priceAfter(getLongValue(row.getCell(7)))
-                        .effectiveDate(getDateValue(row.getCell(8)))
+                        .docId(ParseXlsxValueHelper.parseString(row.getCell(0)))
+                        .sourceType(ParseXlsxValueHelper.parseString(row.getCell(1)))
+                        .supplierName(ParseXlsxValueHelper.parseString(row.getCell(2)))
+                        .rawItemName(ParseXlsxValueHelper.parseString(row.getCell(3)))
+                        .spec(ParseXlsxValueHelper.parseString(row.getCell(4)))
+                        .unit(ParseXlsxValueHelper.parseString(row.getCell(5)))
+                        .priceBefore(ParseXlsxValueHelper.parseLong(row.getCell(6), context))
+                        .priceAfter(ParseXlsxValueHelper.parseLong(row.getCell(7), context))
+                        .effectiveDate(ParseXlsxValueHelper.parseDate(row.getCell(8), context))
+                        .hasParseError(context.hasError())
                         .build();
 
                 list.add(dto);
@@ -63,64 +62,18 @@ public class ExcelFileParser implements FileParser {
     }
 
 
-    private String getStringValue(Cell cell) {
-        if (cell == null) {
-            return null;
+    // 빈 행(Blank Row) 스킵용 메서드
+    private boolean isRowEmpty(Row row) {
+        if (row == null) {
+            return true;
         }
-        return switch (cell.getCellType()) {
-            case STRING -> cell.getStringCellValue().trim();
-            case NUMERIC -> String.valueOf(cell.getNumericCellValue());
-            default -> null;
-        };
-    }
-
-
-    private Long getLongValue(Cell cell) {
-        // 1. 엑셀 셀 포맷이 '숫자'인 경우 (30000)
-        if (cell.getCellType() == CellType.NUMERIC) {
-            return (long) cell.getNumericCellValue();
-        }
-
-        // 2. 엑셀 셀 포맷이 '텍스트'인 경우 ("30,000" 또는 "30000")
-        if (cell.getCellType() == CellType.STRING) {
-            String text = cell.getStringCellValue().trim();
-            if (text.isBlank()) {
-                return null;
+        for (int c = row.getFirstCellNum(); c < row.getLastCellNum(); c++) {
+            Cell cell = row.getCell(c);
+            if (cell != null && cell.getCellType() != CellType.BLANK) {
+                return false;
             }
-
-            // 콤마(,) 제거 후 숫자 파싱
-            String cleanText = text.replace(",", "");
-            return Long.parseLong(cleanText);
         }
-
-        return null;
-    }
-
-    private LocalDate getDateValue(Cell cell) {
-        if (cell == null) {
-            return null;
-        }
-        // 1. 엑셀 실제 날짜 서식인 경우 (NUMERIC)
-        if (cell.getCellType() == CellType.NUMERIC && DateUtil.isCellDateFormatted(cell)) {
-            return cell.getDateCellValue().toInstant()
-                    .atZone(ZoneId.systemDefault())
-                    .toLocalDate();
-        }
-
-        // 2. 텍스트 형태로 "2026-08-01" 또는 "2026/08/01" 등이 입력된 경우 (STRING)
-        if (cell.getCellType() == CellType.STRING) {
-            String text = cell.getStringCellValue().trim();
-            if (text.isBlank()) {
-                return null;
-            }
-
-            // "2026/08/01" 형태를 "2026-08-01"로 통일 후 파싱
-            text = text.replace("/", "-");
-            return LocalDate.parse(text); // YYYY-MM-DD 포맷 파싱
-        }
-
-        // 3. 조건에 맞는 날짜 데이터가 아닌 경우 기본 반환
-        return null;
+        return true;
     }
 
 

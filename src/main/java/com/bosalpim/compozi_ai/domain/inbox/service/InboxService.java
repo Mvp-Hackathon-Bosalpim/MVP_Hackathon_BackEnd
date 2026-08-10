@@ -567,4 +567,34 @@ public class InboxService {
             }
         }
     }
+
+    // 중복 그룹 id 를 통한 중복 아이템 조회
+    @Transactional(readOnly = true)
+    public PageResponseDto<ItemListResponseDto> searchItemsWithDuplicatedGroupId(Long groupId, Pageable pageable) {
+
+        Page<Item> itemPage = itemRepository.findAllByDuplicatedGroupId(groupId, pageable);
+        List<Item> items = itemPage.getContent();
+
+        if (items.isEmpty()) {
+            return new PageResponseDto<>(Page.empty(pageable));
+        }
+
+        List<Long> itemIds = items.stream()
+                .map(Item::getId)
+                .toList();
+
+        List<Issue> issues = issueRepository.findByItemIdInAndResolvedFalse(itemIds);
+
+        Map<Long, List<String>> issueTypesByItemId = issues.stream()
+                .collect(Collectors.groupingBy(
+                        issue -> issue.getItem().getId(),
+                        Collectors.mapping(issue -> issue.getIssueType().name(), Collectors.toList())
+                ));
+
+        Page<ItemListResponseDto> page = itemPage.map(item ->
+                ItemListResponseDto.from(item, issueTypesByItemId.getOrDefault(item.getId(), List.of()))
+        );
+
+        return new PageResponseDto<>(page);
+    }
 }

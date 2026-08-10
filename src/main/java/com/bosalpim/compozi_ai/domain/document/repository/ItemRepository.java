@@ -27,4 +27,6 @@ public interface ItemRepository extends JpaRepository<Item, Long>, ItemQueryRepo
 
     @Query("SELECT i FROM Item i JOIN FETCH i.file WHERE i.reviewStatus = :reviewStatus AND i.deletedAt IS NULL")
     List<Item> findAllByReviewStatusWithFile(@Param("reviewStatus") ReviewStatus reviewStatus);
+
+    Page<Item> findAllByDuplicatedGroupId(Long groupId, Pageable pageable);
 }

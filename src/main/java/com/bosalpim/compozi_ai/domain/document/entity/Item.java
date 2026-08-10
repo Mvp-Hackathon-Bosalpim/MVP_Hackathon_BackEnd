@@ -95,6 +95,7 @@ public class Item {
 
     public static Item CreateCommonItem(CreateCommonItemDocumentReqDto reqDto, File file, DuplicatedGroup group,
                                         ReviewStatus reviewStatus) {
+
         return Item.builder()
                 .file(file)
                 .duplicatedGroup(group)
