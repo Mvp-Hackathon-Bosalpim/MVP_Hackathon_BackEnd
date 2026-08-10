@@ -16,6 +16,7 @@ public class ChangeLogDto {
     private String from;
     private String to;
     private String action;
+    private String memo;
 
     public static ChangeLogDto of(ChangeLog changeLog) {
         return ChangeLogDto.builder()
@@ -24,6 +25,7 @@ public class ChangeLogDto {
                 .from(changeLog.getFromValue())
                 .to(changeLog.getToValue())
                 .action(String.valueOf(changeLog.getAction()).toLowerCase())
+                .memo(changeLog.getMemo())
                 .build();
     }
 }
