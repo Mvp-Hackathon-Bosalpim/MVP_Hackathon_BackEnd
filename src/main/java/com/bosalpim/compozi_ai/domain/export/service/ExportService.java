@@ -256,7 +256,14 @@ public class ExportService {
             }
         }
 
-        return stringWriter.toString().getBytes(StandardCharsets.UTF_8);
+        byte[] bom = {(byte) 0xEF, (byte) 0xBB, (byte) 0xBF};
+        byte[] csvBytes = stringWriter.toString().getBytes(StandardCharsets.UTF_8);
+
+        byte[] result = new byte[bom.length + csvBytes.length];
+        System.arraycopy(bom, 0, result, 0, bom.length);
+        System.arraycopy(csvBytes, 0, result, bom.length, csvBytes.length);
+
+        return result;
     }
 
     // == 공통 추출 (JSON/CSV 공유) == //
