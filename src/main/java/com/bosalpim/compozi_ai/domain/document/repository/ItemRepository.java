@@ -3,6 +3,7 @@ package com.bosalpim.compozi_ai.domain.document.repository;
 import com.bosalpim.compozi_ai.domain.document.entity.Item;
 import com.bosalpim.compozi_ai.domain.document.enums.ReviewStatus;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -29,4 +30,8 @@ public interface ItemRepository extends JpaRepository<Item, Long>, ItemQueryRepo
     List<Item> findAllByReviewStatusWithFile(@Param("reviewStatus") ReviewStatus reviewStatus);
 
     Page<Item> findAllByDuplicatedGroupId(Long groupId, Pageable pageable);
+
+    Optional<Item> findByIdAndDeletedAtIsNull(Long id);
+
+    List<Item> findAllByIdInAndDeletedAtIsNull(List<Long> targetIds);
 }

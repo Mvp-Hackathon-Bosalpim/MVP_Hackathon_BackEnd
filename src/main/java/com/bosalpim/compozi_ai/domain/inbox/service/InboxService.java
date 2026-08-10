@@ -471,7 +471,7 @@ public class InboxService {
     // 삭제 서비스
     @Transactional
     public ItemDeleteResponseDto deleteDetailItem(Long id) {
-        Item item = itemRepository.findById(id).orElseThrow(
+        Item item = itemRepository.findByIdAndDeletedAtIsNull(id).orElseThrow(
                 () -> new CustomException(BadStatusCode.ITEM_NOT_FOUND)
         );
 
@@ -521,9 +521,26 @@ public class InboxService {
             return Collections.emptyList();
         }
 
-        List<Item> targetItems = itemRepository.findAllById(targetIds);
+        List<Item> targetItems = itemRepository.findAllByIdInAndDeletedAtIsNull(targetIds);
+
         if (targetItems.isEmpty()) {
-            return Collections.emptyList();
+            throw new CustomException(BadStatusCode.NO_ITEM_CONTENT);
+        }
+
+        // ----------------- bulk 삭제 요청 시 해당 id 값이 없거나 삭제된 경우 ----------------
+        // item set 구성
+        Set<Long> validItemIds = targetItems.stream()
+                .map(Item::getId)
+                .collect(Collectors.toSet());
+
+        // 요청된 ID 중 DB에 없거나 이미 삭제된 ID 추출
+        List<Long> invalidIds = targetIds.stream()
+                .filter(id -> !validItemIds.contains(id))
+                .toList();
+
+        // 하나라도 유효하지 않은 ID가 존재하면 예외 발생 (전체 Rollback)
+        if (!invalidIds.isEmpty()) {
+            throw new CustomException(BadStatusCode.ITEM_CANNOT_REMOVE);
         }
 
         Set<Long> affectedGroupIds = targetItems.stream()
