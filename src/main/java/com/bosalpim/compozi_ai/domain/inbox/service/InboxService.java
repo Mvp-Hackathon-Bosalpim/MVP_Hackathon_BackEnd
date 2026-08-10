@@ -8,6 +8,7 @@ import com.bosalpim.compozi_ai.domain.document.repository.ItemRepository;
 import com.bosalpim.compozi_ai.domain.document.service.ItemService;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.BulkItemDeleteRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.ChangeLogCreateDto;
+import com.bosalpim.compozi_ai.domain.inbox.dto.request.ItemDeleteRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.ItemSnapshotDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.ItemUpdateRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.BulkActionResponseDto;
@@ -471,7 +472,7 @@ public class InboxService {
 
     // 삭제 서비스
     @Transactional
-    public ItemDeleteResponseDto deleteDetailItem(Long id) {
+    public ItemDeleteResponseDto deleteDetailItem(Long id, ItemDeleteRequestDto requestDto) {
         Item item = itemRepository.findByIdAndDeletedAtIsNull(id, List.of(ReviewStatus.APPROVED, ReviewStatus.REJECTED))
                 .orElseThrow(
                         () -> new CustomException(BadStatusCode.ITEM_CANNOT_REMOVE)
@@ -482,10 +483,10 @@ public class InboxService {
         issueRepository.deleteByItem(item);
         item.delete();
 
-        ChangeLog changeLog = ChangeLog.of(item, Action.DELETE);
+        ChangeLog changeLog = ChangeLog.of(item, Action.DELETE, requestDto.getMemo());
         changeLogRepository.save(changeLog);
 
-        return ItemDeleteResponseDto.delete(item);
+        return ItemDeleteResponseDto.delete(item, requestDto.getMemo());
     }
 
     private void handleDuplicatedGroupOnDelete(Item deletedItem) {
@@ -558,7 +559,7 @@ public class InboxService {
         for (Item item : targetItems) {
             item.updateDuplicatedGroup(null); // 본인 그룹 연관관계 해제
             item.delete();
-            changeLogs.add(ChangeLog.of(item, Action.DELETE));
+            changeLogs.add(ChangeLog.of(item, Action.DELETE, bulkItemDeleteRequestDto.getMemo()));
         }
         changeLogRepository.saveAll(changeLogs);
 
@@ -566,7 +567,9 @@ public class InboxService {
             handleDuplicatedGroupsOnBulkDelete(affectedGroupIds);
         }
 
-        return targetItems.stream().map(ItemDeleteResponseDto::delete).toList();
+        return targetItems.stream().map(
+                item -> ItemDeleteResponseDto.delete(item, bulkItemDeleteRequestDto.getMemo())
+        ).toList();
     }
 
     private void handleDuplicatedGroupsOnBulkDelete(Set<Long> affectedGroupIds) {

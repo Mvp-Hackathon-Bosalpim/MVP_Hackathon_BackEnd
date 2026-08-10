@@ -15,9 +15,12 @@ public class ItemDeleteResponseDto {
     @JsonProperty("deleted_at")
     private LocalDateTime deletedAt;
 
-    public static ItemDeleteResponseDto delete(Item item) {
+    private String memo;
+
+    public static ItemDeleteResponseDto delete(Item item, String memo) {
         return ItemDeleteResponseDto.builder()
                 .id(item.getId())
+                .memo(memo)
                 .deletedAt(item.getDeletedAt())
                 .build();
     }
