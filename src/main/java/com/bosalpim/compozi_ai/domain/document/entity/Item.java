@@ -6,6 +6,7 @@ import com.bosalpim.compozi_ai.domain.document.enums.ReviewStatus;
 import com.bosalpim.compozi_ai.domain.document.enums.SourceType;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.ItemUpdateRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.entity.DuplicatedGroup;
+import com.bosalpim.compozi_ai.general.entity.BaseTimeStampEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -38,7 +39,7 @@ import lombok.NoArgsConstructor;
         uniqueConstraints = @UniqueConstraint(columnNames = {"file_id", "doc_id"}),
         indexes = @Index(name = "idx_item_duplicate_check",
                 columnList = "supplier_name, normalized_item_name, spec, unit, price_before, price_after, effective_date"))
-public class Item {
+public class Item extends BaseTimeStampEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

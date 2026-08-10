@@ -1,11 +1,13 @@
 package com.bosalpim.compozi_ai.domain.document.repository.item;
 
 
+import com.bosalpim.compozi_ai.domain.dashboard.dto.StatusCountDto;
 import com.bosalpim.compozi_ai.domain.document.entity.Item;
 import com.bosalpim.compozi_ai.domain.document.enums.ReviewStatus;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.DeletedItemResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemNavigationDto;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -23,11 +25,9 @@ public interface ItemQueryRepository {
 
     Optional<Item> findByIdWithFile(Long id);
 
-    Optional<Item> findDuplicateCandidate(Long excludeItemId, String supplierName, String normalizedItemName,
-                                          String spec, String unit, Long priceBefore, Long priceAfter,
-                                          LocalDate effectiveDate);
-
     List<Item> findByDuplicatedGroupIdAndDeletedAtIsNull(Long groupId, Long excludeItemId);
 
     List<Item> findByDuplicatedGroupIdInAndDeletedAtIsNull(Collection<Long> groupIds);
+
+    List<StatusCountDto> countByReviewStatusForDashboard(LocalDateTime todayStart);
 }
