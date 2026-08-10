@@ -10,12 +10,12 @@ import com.bosalpim.compozi_ai.domain.document.dto.request.manualFile.CreateManu
 import com.bosalpim.compozi_ai.domain.document.entity.File;
 import com.bosalpim.compozi_ai.domain.document.entity.Item;
 import com.bosalpim.compozi_ai.domain.document.enums.ReviewStatus;
-import com.bosalpim.compozi_ai.domain.document.repository.ItemRepository;
+import com.bosalpim.compozi_ai.domain.document.repository.item.ItemRepository;
 import com.bosalpim.compozi_ai.domain.inbox.entity.DuplicatedGroup;
 import com.bosalpim.compozi_ai.domain.inbox.entity.Issue;
 import com.bosalpim.compozi_ai.domain.inbox.enums.IssueType;
 import com.bosalpim.compozi_ai.domain.inbox.repository.DuplicatedGroupRepository;
-import com.bosalpim.compozi_ai.domain.inbox.repository.IssueRepository;
+import com.bosalpim.compozi_ai.domain.inbox.repository.issue.IssueRepository;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import java.util.ArrayList;

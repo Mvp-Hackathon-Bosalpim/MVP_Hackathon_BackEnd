@@ -1,4 +1,4 @@
-package com.bosalpim.compozi_ai.domain.document.repository;
+package com.bosalpim.compozi_ai.domain.document.repository.item;
 
 import static com.bosalpim.compozi_ai.domain.document.entity.QFile.file;
 import static com.bosalpim.compozi_ai.domain.document.entity.QItem.item;
@@ -11,8 +11,12 @@ import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
+import com.querydsl.core.types.dsl.DatePath;
+import com.querydsl.core.types.dsl.NumberPath;
+import com.querydsl.core.types.dsl.StringPath;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -111,7 +115,59 @@ public class ItemRepositoryImpl implements ItemQueryRepository {
         return Optional.ofNullable(result);
     }
 
-//    == 쿼리 dsl 편의 메서드 == //
+    @Override
+    public Optional<Item> findDuplicateCandidate(Long excludeItemId, String supplierName, String normalizedItemName,
+                                                 String spec, String unit, Long priceBefore, Long priceAfter,
+                                                 LocalDate effectiveDate) {
+
+        Item result = queryFactory.selectFrom(item)
+                .where(
+                        item.deletedAt.isNull(),
+                        item.id.ne(excludeItemId),
+                        eqOrIsNull(item.supplierName, supplierName),
+                        eqOrIsNull(item.normalizedItemName, normalizedItemName),
+                        eqOrIsNull(item.spec, spec),
+                        eqOrIsNull(item.unit, unit),
+                        eqOrIsNull(item.priceBefore, priceBefore),
+                        eqOrIsNull(item.priceAfter, priceAfter),
+                        eqOrIsNull(item.effectiveDate, effectiveDate)
+                )
+                .fetchFirst();
+
+        return Optional.ofNullable(result);
+    }
+
+    @Override
+    public List<Item> findByDuplicatedGroupIdAndDeletedAtIsNull(Long groupId, Long excludeItemId) {
+        return queryFactory.selectFrom(item)
+                .where(
+                        item.duplicatedGroup.id.eq(groupId),
+                        item.deletedAt.isNull(),
+                        excludeItemId != null ? item.id.ne(excludeItemId) : null
+                )
+                .fetch();
+    }
+
+    @Override
+    public List<Item> findByDuplicatedGroupIdInAndDeletedAtIsNull(Collection<Long> groupIds) {
+        return queryFactory.selectFrom(item)
+                .where(item.duplicatedGroup.id.in(groupIds), item.deletedAt.isNull())
+                .fetch();
+    }
+
+    //    == 쿼리 dsl 편의 메서드 == //
+
+    private BooleanExpression eqOrIsNull(StringPath path, String value) {
+        return value == null ? path.isNull() : path.eq(value);
+    }
+
+    private BooleanExpression eqOrIsNull(NumberPath<Long> path, Long value) {
+        return value == null ? path.isNull() : path.eq(value);
+    }
+
+    private BooleanExpression eqOrIsNull(DatePath<LocalDate> path, LocalDate value) {
+        return value == null ? path.isNull() : path.eq(value);
+    }
 
     private BooleanExpression itemNameIn(List<String> itemNames) {
         return (itemNames == null || itemNames.isEmpty()) ? null : item.normalizedItemName.in(itemNames);

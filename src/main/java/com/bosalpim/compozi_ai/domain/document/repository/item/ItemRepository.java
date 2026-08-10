@@ -1,4 +1,4 @@
-package com.bosalpim.compozi_ai.domain.document.repository;
+package com.bosalpim.compozi_ai.domain.document.repository.item;
 
 import com.bosalpim.compozi_ai.domain.document.entity.Item;
 import com.bosalpim.compozi_ai.domain.document.enums.ReviewStatus;

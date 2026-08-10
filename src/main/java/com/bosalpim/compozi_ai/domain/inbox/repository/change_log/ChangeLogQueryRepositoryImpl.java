@@ -1,4 +1,4 @@
-package com.bosalpim.compozi_ai.domain.inbox.repository;
+package com.bosalpim.compozi_ai.domain.inbox.repository.change_log;
 
 import static com.bosalpim.compozi_ai.domain.inbox.entity.QChangeLog.changeLog;
 
