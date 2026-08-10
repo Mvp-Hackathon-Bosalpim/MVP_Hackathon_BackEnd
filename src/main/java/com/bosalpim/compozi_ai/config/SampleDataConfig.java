@@ -6,7 +6,7 @@ import com.bosalpim.compozi_ai.domain.document.enums.InputMethod;
 import com.bosalpim.compozi_ai.domain.document.enums.ReviewStatus;
 import com.bosalpim.compozi_ai.domain.document.enums.SourceType;
 import com.bosalpim.compozi_ai.domain.document.repository.FileRepository;
-import com.bosalpim.compozi_ai.domain.document.repository.ItemRepository;
+import com.bosalpim.compozi_ai.domain.document.repository.item.ItemRepository;
 import jakarta.annotation.PostConstruct;
 import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
