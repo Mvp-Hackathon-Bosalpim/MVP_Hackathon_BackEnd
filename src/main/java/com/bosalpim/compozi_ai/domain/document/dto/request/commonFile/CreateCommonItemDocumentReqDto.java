@@ -1,5 +1,6 @@
 package com.bosalpim.compozi_ai.domain.document.dto.request.commonFile;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
@@ -39,6 +40,7 @@ public class CreateCommonItemDocumentReqDto {
     private Long priceAfter;
 
     @NotNull(message = "적용일이 누락되었습니다.")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate effectiveDate;
 
     @Setter
