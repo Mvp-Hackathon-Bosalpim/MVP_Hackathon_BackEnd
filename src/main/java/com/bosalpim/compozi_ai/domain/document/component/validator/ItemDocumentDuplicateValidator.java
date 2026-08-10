@@ -5,8 +5,6 @@ import com.bosalpim.compozi_ai.domain.document.dto.request.commonFile.CreateComm
 import com.bosalpim.compozi_ai.domain.document.dto.request.manualFile.CheckDuplicatedManualItemDto;
 import com.bosalpim.compozi_ai.domain.document.dto.request.manualFile.CreateManualItemDocumentReqDto;
 import com.bosalpim.compozi_ai.domain.document.entity.Item;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -114,25 +112,7 @@ public class ItemDocumentDuplicateValidator {
     public String generateKey(Object... fields) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < fields.length; i++) {
-            Object field = fields[i];
-
-            if (field == null) {
-                sb.append("");
-            } else if (field instanceof String str) {
-                sb.append(str.trim());
-            } else if (field instanceof LocalDate localDate) {
-                sb.append(localDate.format(DateTimeFormatter.ISO_LOCAL_DATE));
-            } else if (field instanceof java.sql.Date sqlDate) {
-                // DB Driver가 java.sql.Date로 넘겨줄 경우 방어
-                sb.append(sqlDate.toLocalDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
-            } else if (field instanceof java.util.Date utilDate) {
-                // java.util.Date / Timestamp 계열 방어
-                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
-                sb.append(sdf.format(utilDate));
-            } else {
-                sb.append(field.toString().trim());
-            }
-
+            sb.append(fields[i]);
             if (i < fields.length - 1) {
                 sb.append("|");
             }
