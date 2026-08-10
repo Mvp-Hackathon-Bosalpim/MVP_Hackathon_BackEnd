@@ -258,10 +258,10 @@ public class ItemInboxController {
         return inboxService.searchItemsWithDuplicatedGroupId(id, pageable);
     }
 
+    @Operation(summary = "삭제된 품목 목록 조회", description = "소프트 삭제된(deleted_at이 not null인) 품목의 기본 정보와 삭제 사유(memo)를 함께 조회한다.")
     @ApiSuccess(message = "삭제 목록 불러오기 성공")
-    @GetMapping("/api/v1/items/deleted")
+    @GetMapping("/items/deleted")
     public List<DeletedItemResponseDto> getDeletedItems() {
         return inboxService.getDeletedItems();
     }
-
 }
