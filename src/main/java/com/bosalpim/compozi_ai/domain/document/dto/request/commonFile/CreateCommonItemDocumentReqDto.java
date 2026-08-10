@@ -44,5 +44,7 @@ public class CreateCommonItemDocumentReqDto {
     @Setter
     private String duplicateGroupKey;
 
+    private boolean hasParseError;
+
 
 }
