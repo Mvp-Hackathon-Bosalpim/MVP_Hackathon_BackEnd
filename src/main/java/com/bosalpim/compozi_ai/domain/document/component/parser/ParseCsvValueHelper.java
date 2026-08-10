@@ -1,16 +1,14 @@
 package com.bosalpim.compozi_ai.domain.document.component.parser;
 
 import java.time.LocalDate;
-import org.springframework.stereotype.Component;
 
-@Component
-public class ParseValueHelper {
+public class ParseCsvValueHelper {
 
     public static String parseString(String val) { // 문자열 변환
         return val;
     }
 
-    public static Long parseLong(String val, ParseContext context) { // 정수 변환
+    public static Long parseLong(String val, ParseContext context) {
         String cleaned = parseString(val);
         if (cleaned == null) {
             return null;
@@ -19,7 +17,7 @@ public class ParseValueHelper {
         try {
             return Long.parseLong(cleaned.replace(",", ""));
         } catch (Exception e) {
-            context.setError(); // 파싱 에러 감지
+            context.setError();
             return null;
         }
     }
@@ -34,12 +32,11 @@ public class ParseValueHelper {
             String formatted = cleaned.replace("/", "-");
             return LocalDate.parse(formatted);
         } catch (Exception e) {
-            context.setError(); // 파싱 에러 감지
+            context.setError();
             return null;
         }
     }
 
-    // 행별 에러 상태 감지용 컨텍스트 클래스
     public static class ParseContext {
         private boolean hasError = false;
 

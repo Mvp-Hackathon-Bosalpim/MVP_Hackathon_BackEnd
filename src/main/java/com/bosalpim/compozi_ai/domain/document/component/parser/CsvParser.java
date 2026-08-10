@@ -38,19 +38,19 @@ public class CsvParser implements FileParser {
                     continue;
                 }
 
-                ParseValueHelper.ParseContext context = new ParseValueHelper.ParseContext();
+                ParseCsvValueHelper.ParseContext context = new ParseCsvValueHelper.ParseContext();
 
                 CreateCommonItemDocumentReqDto dto = CreateCommonItemDocumentReqDto.builder()
                         .rowNo((long) i)
-                        .docId(ParseValueHelper.parseString(getValue(row, 0)))
-                        .sourceType(ParseValueHelper.parseString(getValue(row, 1)))
-                        .supplierName(ParseValueHelper.parseString(getValue(row, 2)))
-                        .rawItemName(ParseValueHelper.parseString(getValue(row, 3)))
-                        .spec(ParseValueHelper.parseString(getValue(row, 4)))
-                        .unit(ParseValueHelper.parseString(getValue(row, 5)))
-                        .priceBefore(ParseValueHelper.parseLong(getValue(row, 6), context))
-                        .priceAfter(ParseValueHelper.parseLong(getValue(row, 7), context))
-                        .effectiveDate(ParseValueHelper.parseDate(getValue(row, 8), context))
+                        .docId(ParseCsvValueHelper.parseString(getValue(row, 0)))
+                        .sourceType(ParseCsvValueHelper.parseString(getValue(row, 1)))
+                        .supplierName(ParseCsvValueHelper.parseString(getValue(row, 2)))
+                        .rawItemName(ParseCsvValueHelper.parseString(getValue(row, 3)))
+                        .spec(ParseCsvValueHelper.parseString(getValue(row, 4)))
+                        .unit(ParseCsvValueHelper.parseString(getValue(row, 5)))
+                        .priceBefore(ParseCsvValueHelper.parseLong(getValue(row, 6), context))
+                        .priceAfter(ParseCsvValueHelper.parseLong(getValue(row, 7), context))
+                        .effectiveDate(ParseCsvValueHelper.parseDate(getValue(row, 8), context))
                         .hasParseError(context.hasError())
                         .build();
 
