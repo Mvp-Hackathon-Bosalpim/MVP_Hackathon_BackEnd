@@ -9,8 +9,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class ItemDocumentDuplicateValidator {
@@ -31,6 +33,7 @@ public class ItemDocumentDuplicateValidator {
                     item.getSupplierName(), item.getNormalizedItemName(), item.getSpec(),
                     item.getUnit(), item.getPriceBefore(), item.getPriceAfter(), item.getEffectiveDate()
             );
+            log.info("key1 ----------------------", key);
             existingDbMap.putIfAbsent(key, item); // ID가 가장 작은 원본 1개만 유지
         }
 
@@ -44,6 +47,7 @@ public class ItemDocumentDuplicateValidator {
                     dto.getSupplierName(), normalizedName, dto.getSpec(),
                     dto.getUnit(), dto.getPriceBefore(), dto.getPriceAfter(), dto.getEffectiveDate()
             );
+            log.info("key2 ----------------------", key);
 
             // DB에 존재하거나 요청 목록 내에서 이미 등장했으면 Duplicate Group Key 부여
             if (existingDbMap.containsKey(key) || firstSeenMap.containsKey(key)) {
