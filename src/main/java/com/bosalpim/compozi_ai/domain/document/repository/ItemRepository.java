@@ -36,5 +36,7 @@ public interface ItemRepository extends JpaRepository<Item, Long>, ItemQueryRepo
     Optional<Item> findByIdAndDeletedAtIsNull(@Param("id") Long id,
                                               @Param("excludedStatuses") Collection<ReviewStatus> excludedStatuses);
 
-    List<Item> findAllByIdInAndDeletedAtIsNull(List<Long> targetIds);
+    @Query("SELECT i FROM Item i WHERE i.id IN :targetIds AND i.deletedAt IS NULL AND i.reviewStatus NOT IN :excludedStatuses")
+    List<Item> findAllByIdInAndDeletedAtIsNull(@Param("targetIds") List<Long> targetIds,
+                                               @Param("excludedStatuses") Collection<ReviewStatus> excludedStatuses);
 }

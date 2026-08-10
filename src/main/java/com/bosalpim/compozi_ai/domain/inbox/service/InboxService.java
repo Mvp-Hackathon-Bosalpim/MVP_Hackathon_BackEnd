@@ -473,7 +473,7 @@ public class InboxService {
     public ItemDeleteResponseDto deleteDetailItem(Long id) {
         Item item = itemRepository.findByIdAndDeletedAtIsNull(id, List.of(ReviewStatus.APPROVED, ReviewStatus.REJECTED))
                 .orElseThrow(
-                        () -> new CustomException(BadStatusCode.ITEM_NOT_FOUND)
+                        () -> new CustomException(BadStatusCode.ITEM_CANNOT_REMOVE)
                 );
 
         handleDuplicatedGroupOnDelete(item);
@@ -522,7 +522,8 @@ public class InboxService {
             return Collections.emptyList();
         }
 
-        List<Item> targetItems = itemRepository.findAllByIdInAndDeletedAtIsNull(targetIds);
+        List<Item> targetItems = itemRepository.findAllByIdInAndDeletedAtIsNull(targetIds,
+                List.of(ReviewStatus.APPROVED, ReviewStatus.REJECTED));
 
         if (targetItems.isEmpty()) {
             throw new CustomException(BadStatusCode.NO_ITEM_CONTENT);
