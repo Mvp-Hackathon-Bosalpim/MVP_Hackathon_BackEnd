@@ -5,6 +5,8 @@ import com.bosalpim.compozi_ai.domain.document.dto.request.commonFile.CreateComm
 import com.bosalpim.compozi_ai.domain.document.dto.request.manualFile.CheckDuplicatedManualItemDto;
 import com.bosalpim.compozi_ai.domain.document.dto.request.manualFile.CreateManualItemDocumentReqDto;
 import com.bosalpim.compozi_ai.domain.document.entity.Item;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -112,7 +114,18 @@ public class ItemDocumentDuplicateValidator {
     public String generateKey(Object... fields) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < fields.length; i++) {
-            sb.append(fields[i]);
+            Object field = fields[i];
+
+            if (field == null) {
+                sb.append(""); //
+            } else if (field instanceof String) {
+                sb.append(((String) field).trim());
+            } else if (field instanceof LocalDate) {
+                sb.append(((LocalDate) field).format(DateTimeFormatter.ISO_LOCAL_DATE));
+            } else {
+                sb.append(field.toString().trim());
+            }
+
             if (i < fields.length - 1) {
                 sb.append("|");
             }
