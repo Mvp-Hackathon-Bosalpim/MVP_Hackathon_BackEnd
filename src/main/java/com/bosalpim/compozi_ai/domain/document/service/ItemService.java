@@ -58,7 +58,7 @@ public class ItemService {
                     Set<ConstraintViolation<CreateCommonItemDocumentReqDto>> violations = validator.validate(dto);
                     boolean hasMissingField = !violations.isEmpty();
 
-                    if (reviewStatus.equals(ReviewStatus.NEW) && hasMissingField) {
+                    if (dto.isHasParseError() || reviewStatus.equals(ReviewStatus.NEW) && hasMissingField) {
                         reviewStatus = ReviewStatus.NEEDS_REVIEW;
                     }
 
