@@ -110,7 +110,7 @@ public class Item {
                 .rawItemName(reqDto.getRawItemName())
                 .normalizedItemName(reqDto.getNormalizedItemName())
                 .spec(reqDto.getSpec())
-                .unit(reqDto.getUnit())
+                .unit(reqDto.getUnit().trim())
                 .priceBefore(reqDto.getPriceBefore())
                 .priceAfter(reqDto.getPriceAfter())
                 .effectiveDate(reqDto.getEffectiveDate())
@@ -129,7 +129,7 @@ public class Item {
                 .rawItemName(reqDto.getRawItemName())
                 .normalizedItemName(normalizedItemName)
                 .spec(reqDto.getSpec())
-                .unit(reqDto.getUnit())
+                .unit(reqDto.getUnit().trim())
                 .priceBefore(reqDto.getPriceBefore())
                 .priceAfter(reqDto.getPriceAfter())
                 .effectiveDate(reqDto.getEffectiveDate())
@@ -164,7 +164,7 @@ public class Item {
             this.spec = dto.getSpec();
         }
         if (dto.getUnit() != null) {
-            this.unit = dto.getUnit();
+            this.unit = dto.getUnit().trim();
         }
         if (dto.getPriceBefore() != null) {
             this.priceBefore = dto.getPriceBefore();

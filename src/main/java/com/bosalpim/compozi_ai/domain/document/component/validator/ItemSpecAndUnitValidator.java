@@ -1,26 +1,33 @@
 package com.bosalpim.compozi_ai.domain.document.component.validator;
 
+import com.bosalpim.compozi_ai.domain.document.component.parser.ValidItemSpecAndUnit;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
 import java.util.Set;
 import java.util.regex.Pattern;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ItemSpecAndUnitValidator { // 규격 체킹
+public class ItemSpecAndUnitValidator implements
+        ConstraintValidator<ValidItemSpecAndUnit, SpecAndUnitAware> {
 
-    // 규격 정규식 패턴
     private static final Pattern SPEC_CHANGE_PATTERN =
             Pattern.compile("^\\s*기존\\s*(?<old>.+?)\\s*/\\s*변경\\s*(?<new>.+?)\\s*$");
 
     // 표준 단위 집합
     private static final Set<String> ALLOWED_UNITS = Set.of("PK", "BOX", "EA", "PO");
 
-
     public boolean isSpecMismatch(String spec) {
-        // 수행 이전에 빈 필드 체킹 과정 있음
-        return SPEC_CHANGE_PATTERN.matcher(spec).matches();
+        if (spec == null || spec.isBlank()) {
+            return false;
+        }
+        return SPEC_CHANGE_PATTERN.matcher(spec.trim()).matches();
     }
 
     public boolean isUnitMismatch(String unit) {
+        if (unit == null || unit.isBlank()) {
+            return false;
+        }
         String trimmedUnit = unit.trim().toUpperCase();
 
         if (trimmedUnit.contains("/") || trimmedUnit.contains(",")) {
@@ -29,5 +36,23 @@ public class ItemSpecAndUnitValidator { // 규격 체킹
         return !ALLOWED_UNITS.contains(trimmedUnit);
     }
 
+    @Override
+    public boolean isValid(SpecAndUnitAware dto, ConstraintValidatorContext context) {
+        if (dto == null) {
+            return true;
+        }
 
+        String spec = dto.getSpec();
+        String unit = dto.getUnit();
+
+        if (isSpecMismatch(spec)) {
+            return false;
+        }
+
+        if (isUnitMismatch(unit)) {
+            return false;
+        }
+
+        return true;
+    }
 }
