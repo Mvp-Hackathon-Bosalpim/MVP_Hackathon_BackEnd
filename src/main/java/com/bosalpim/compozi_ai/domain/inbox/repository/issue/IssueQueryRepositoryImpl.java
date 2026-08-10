@@ -1,4 +1,4 @@
-package com.bosalpim.compozi_ai.domain.inbox.repository;
+package com.bosalpim.compozi_ai.domain.inbox.repository.issue;
 
 import static com.bosalpim.compozi_ai.domain.inbox.entity.QIssue.issue;
 

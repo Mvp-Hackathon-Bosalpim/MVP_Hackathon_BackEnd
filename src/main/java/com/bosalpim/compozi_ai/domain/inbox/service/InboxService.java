@@ -4,7 +4,7 @@ import com.bosalpim.compozi_ai.domain.document.component.validator.ItemDocumentD
 import com.bosalpim.compozi_ai.domain.document.component.validator.ItemSpecAndUnitValidator;
 import com.bosalpim.compozi_ai.domain.document.entity.Item;
 import com.bosalpim.compozi_ai.domain.document.enums.ReviewStatus;
-import com.bosalpim.compozi_ai.domain.document.repository.ItemRepository;
+import com.bosalpim.compozi_ai.domain.document.repository.item.ItemRepository;
 import com.bosalpim.compozi_ai.domain.document.service.ItemService;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.BulkItemDeleteRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.ChangeLogCreateDto;
@@ -24,9 +24,9 @@ import com.bosalpim.compozi_ai.domain.inbox.entity.DuplicatedGroup;
 import com.bosalpim.compozi_ai.domain.inbox.entity.Issue;
 import com.bosalpim.compozi_ai.domain.inbox.enums.Action;
 import com.bosalpim.compozi_ai.domain.inbox.enums.IssueType;
-import com.bosalpim.compozi_ai.domain.inbox.repository.ChangeLogRepository;
 import com.bosalpim.compozi_ai.domain.inbox.repository.DuplicatedGroupRepository;
-import com.bosalpim.compozi_ai.domain.inbox.repository.IssueRepository;
+import com.bosalpim.compozi_ai.domain.inbox.repository.change_log.ChangeLogRepository;
+import com.bosalpim.compozi_ai.domain.inbox.repository.issue.IssueRepository;
 import com.bosalpim.compozi_ai.general.enums.BadStatusCode;
 import com.bosalpim.compozi_ai.general.exception.CustomException;
 import com.bosalpim.compozi_ai.general.response.PageResponseDto;
@@ -518,17 +518,11 @@ public class InboxService {
             return;
         }
 
-        Long groupId = targetGroup.getId();
-
-        List<Item> remainingItemsInGroup = itemRepository.findAllByDeletedAtIsNullOrderByIdAsc().stream()
-                .filter(other -> !other.getId().equals(deletedItem.getId()))
-                .filter(other -> other.getDuplicatedGroup() != null)
-                .filter(other -> groupId.equals(other.getDuplicatedGroup().getId()))
-                .toList();
+        List<Item> remainingItemsInGroup =
+                itemRepository.findByDuplicatedGroupIdAndDeletedAtIsNull(targetGroup.getId(), deletedItem.getId());
 
         if (remainingItemsInGroup.size() == 1) {
             Item lonelyItem = remainingItemsInGroup.get(0);
-
             lonelyItem.updateDuplicatedGroup(null);
 
             issueRepository.findByItemAndResolved(lonelyItem, false).stream()
@@ -596,22 +590,20 @@ public class InboxService {
     }
 
     private void handleDuplicatedGroupsOnBulkDelete(Set<Long> affectedGroupIds) {
-        List<Item> activeItems = itemRepository.findAllByDeletedAtIsNullOrderByIdAsc();
+        List<Item> remainingItems = itemRepository.findByDuplicatedGroupIdInAndDeletedAtIsNull(affectedGroupIds);
+
+        Map<Long, List<Item>> remainingByGroupId = remainingItems.stream()
+                .collect(Collectors.groupingBy(i -> i.getDuplicatedGroup().getId()));
 
         for (Long groupId : affectedGroupIds) {
-            List<Item> remainingItems = activeItems.stream()
-                    .filter(item -> item.getDuplicatedGroup() != null)
-                    .filter(item -> groupId.equals(item.getDuplicatedGroup().getId()))
-                    .toList();
+            List<Item> remaining = remainingByGroupId.getOrDefault(groupId, List.of());
+            if (remaining.size() == 1) {
+                Item lonelyItem = remaining.get(0);
+                lonelyItem.updateDuplicatedGroup(null);
 
-            if (remainingItems.size() <= 1) {
-                for (Item lonelyItem : remainingItems) {
-                    lonelyItem.updateDuplicatedGroup(null);
-
-                    issueRepository.findByItemAndResolved(lonelyItem, false).stream()
-                            .filter(issue -> issue.getIssueType() == IssueType.DUPLICATE_SUSPECTED)
-                            .forEach(Issue::resolve);
-                }
+                issueRepository.findByItemAndResolved(lonelyItem, false).stream()
+                        .filter(issue -> issue.getIssueType() == IssueType.DUPLICATE_SUSPECTED)
+                        .forEach(Issue::resolve);
             }
         }
     }
