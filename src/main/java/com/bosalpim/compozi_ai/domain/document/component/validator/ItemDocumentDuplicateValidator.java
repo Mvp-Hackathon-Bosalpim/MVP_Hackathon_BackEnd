@@ -117,11 +117,18 @@ public class ItemDocumentDuplicateValidator {
             Object field = fields[i];
 
             if (field == null) {
-                sb.append(""); //
-            } else if (field instanceof String) {
-                sb.append(((String) field).trim());
-            } else if (field instanceof LocalDate) {
-                sb.append(((LocalDate) field).format(DateTimeFormatter.ISO_LOCAL_DATE));
+                sb.append("");
+            } else if (field instanceof String str) {
+                sb.append(str.trim());
+            } else if (field instanceof LocalDate localDate) {
+                sb.append(localDate.format(DateTimeFormatter.ISO_LOCAL_DATE));
+            } else if (field instanceof java.sql.Date sqlDate) {
+                // DB Driver가 java.sql.Date로 넘겨줄 경우 방어
+                sb.append(sqlDate.toLocalDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
+            } else if (field instanceof java.util.Date utilDate) {
+                // java.util.Date / Timestamp 계열 방어
+                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+                sb.append(sdf.format(utilDate));
             } else {
                 sb.append(field.toString().trim());
             }
