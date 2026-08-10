@@ -2,6 +2,7 @@ package com.bosalpim.compozi_ai.domain.document.repository;
 
 import com.bosalpim.compozi_ai.domain.document.entity.Item;
 import com.bosalpim.compozi_ai.domain.document.enums.ReviewStatus;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
@@ -31,7 +32,9 @@ public interface ItemRepository extends JpaRepository<Item, Long>, ItemQueryRepo
 
     Page<Item> findAllByDuplicatedGroupId(Long groupId, Pageable pageable);
 
-    Optional<Item> findByIdAndDeletedAtIsNull(Long id);
+    @Query("SELECT i FROM Item i WHERE i.id = :id AND i.deletedAt IS NULL AND i.reviewStatus NOT IN :excludedStatuses ")
+    Optional<Item> findByIdAndDeletedAtIsNull(@Param("id") Long id,
+                                              @Param("excludedStatuses") Collection<ReviewStatus> excludedStatuses);
 
     List<Item> findAllByIdInAndDeletedAtIsNull(List<Long> targetIds);
 }

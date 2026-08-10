@@ -471,9 +471,10 @@ public class InboxService {
     // 삭제 서비스
     @Transactional
     public ItemDeleteResponseDto deleteDetailItem(Long id) {
-        Item item = itemRepository.findByIdAndDeletedAtIsNull(id).orElseThrow(
-                () -> new CustomException(BadStatusCode.ITEM_NOT_FOUND)
-        );
+        Item item = itemRepository.findByIdAndDeletedAtIsNull(id, List.of(ReviewStatus.APPROVED, ReviewStatus.REJECTED))
+                .orElseThrow(
+                        () -> new CustomException(BadStatusCode.ITEM_NOT_FOUND)
+                );
 
         handleDuplicatedGroupOnDelete(item);
 
