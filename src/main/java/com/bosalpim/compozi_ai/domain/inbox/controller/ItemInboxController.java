@@ -8,6 +8,7 @@ import com.bosalpim.compozi_ai.domain.inbox.dto.request.ItemSearchRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.ItemUpdateRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.MemoRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.BulkActionResponseDto;
+import com.bosalpim.compozi_ai.domain.inbox.dto.response.DeletedItemResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemActionResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemDeleteResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemDetailResponseDto;
@@ -255,6 +256,12 @@ public class ItemInboxController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
         return inboxService.searchItemsWithDuplicatedGroupId(id, pageable);
+    }
+
+    @ApiSuccess(message = "삭제 목록 불러오기 성공")
+    @GetMapping("/api/v1/items/deleted")
+    public List<DeletedItemResponseDto> getDeletedItems() {
+        return inboxService.getDeletedItems();
     }
 
 }

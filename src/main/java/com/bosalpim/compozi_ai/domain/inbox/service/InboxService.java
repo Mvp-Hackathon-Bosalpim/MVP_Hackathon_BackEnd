@@ -12,6 +12,7 @@ import com.bosalpim.compozi_ai.domain.inbox.dto.request.ItemDeleteRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.ItemSnapshotDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.request.ItemUpdateRequestDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.BulkActionResponseDto;
+import com.bosalpim.compozi_ai.domain.inbox.dto.response.DeletedItemResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemDeleteResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemDetailResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemListResponseDto;
@@ -56,6 +57,25 @@ public class InboxService {
     private final ItemDocumentDuplicateValidator itemDocumentDuplicateValidator;
     private final Validator validator;
 
+    @Transactional(readOnly = true)
+    public List<DeletedItemResponseDto> getDeletedItems() {
+        List<DeletedItemResponseDto> deletedItems = itemRepository.findDeletedItems();
+        if (deletedItems.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> itemIds = deletedItems.stream()
+                .map(DeletedItemResponseDto::getId)
+                .toList();
+
+        Map<Long, String> memoByItemId = changeLogRepository.findAllByItemIdIn(itemIds).stream()
+                .collect(Collectors.toMap(cl -> cl.getItem().getId(), ChangeLog::getMemo));
+
+        return deletedItems.stream()
+                .map(dto -> dto.toBuilder().memo(memoByItemId.get(dto.getId())).build())
+                .toList();
+
+    }
 
     @Transactional
     public Long approve(Long id, String memo) {
@@ -280,13 +300,16 @@ public class InboxService {
 
     @Transactional(readOnly = true)
     public StatusCountResponseDto getStatusCounts() {
-        long newCount = itemRepository.countByReviewStatusAndDeletedAtIsNull(ReviewStatus.NEW);
-        long needsReviewCount = itemRepository.countByReviewStatusAndDeletedAtIsNull(ReviewStatus.NEEDS_REVIEW);
-        long onHoldCount = itemRepository.countByReviewStatusAndDeletedAtIsNull(ReviewStatus.ON_HOLD);
-        long approvedCount = itemRepository.countByReviewStatusAndDeletedAtIsNull(ReviewStatus.APPROVED);
-        long rejectedCount = itemRepository.countByReviewStatusAndDeletedAtIsNull(ReviewStatus.REJECTED);
+        Map<ReviewStatus, Long> counts = itemRepository.countGroupByReviewStatus().stream()
+                .collect(Collectors.toMap(row -> (ReviewStatus) row[0], row -> (Long) row[1]));
 
-        return new StatusCountResponseDto(newCount, needsReviewCount, onHoldCount, approvedCount, rejectedCount);
+        return new StatusCountResponseDto(
+                counts.getOrDefault(ReviewStatus.NEW, 0L),
+                counts.getOrDefault(ReviewStatus.NEEDS_REVIEW, 0L),
+                counts.getOrDefault(ReviewStatus.ON_HOLD, 0L),
+                counts.getOrDefault(ReviewStatus.APPROVED, 0L),
+                counts.getOrDefault(ReviewStatus.REJECTED, 0L)
+        );
     }
 
     @Transactional(readOnly = true)

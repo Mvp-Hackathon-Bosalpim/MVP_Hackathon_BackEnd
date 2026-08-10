@@ -3,6 +3,7 @@ package com.bosalpim.compozi_ai.domain.document.repository;
 
 import com.bosalpim.compozi_ai.domain.document.entity.Item;
 import com.bosalpim.compozi_ai.domain.document.enums.ReviewStatus;
+import com.bosalpim.compozi_ai.domain.inbox.dto.response.DeletedItemResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemNavigationDto;
 import java.time.LocalDate;
 import java.util.List;
@@ -19,4 +20,6 @@ public interface ItemQueryRepository {
             Long targetId,
             List<ReviewStatus> excludedStatuses
     );
+
+    List<DeletedItemResponseDto> findDeletedItems();
 }

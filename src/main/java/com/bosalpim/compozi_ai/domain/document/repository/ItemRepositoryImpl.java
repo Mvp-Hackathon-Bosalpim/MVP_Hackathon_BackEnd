@@ -4,8 +4,9 @@ import static com.bosalpim.compozi_ai.domain.document.entity.QItem.item;
 
 import com.bosalpim.compozi_ai.domain.document.entity.Item;
 import com.bosalpim.compozi_ai.domain.document.enums.ReviewStatus;
+import com.bosalpim.compozi_ai.domain.inbox.dto.response.DeletedItemResponseDto;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.ItemNavigationDto;
-import com.bosalpim.compozi_ai.domain.document.enums.ReviewStatus;
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.LocalDate;
@@ -136,5 +137,24 @@ public class ItemRepositoryImpl implements ItemQueryRepository {
 
     private BooleanExpression reviewStatusEq(ReviewStatus reviewStatus) {
         return reviewStatus == null ? null : item.reviewStatus.eq(reviewStatus);
+    }
+
+
+    @Override
+    public List<DeletedItemResponseDto> findDeletedItems() {
+        return queryFactory
+                .select(Projections.constructor(DeletedItemResponseDto.class,
+                        item.id,
+                        item.docId,
+                        item.sourceType,
+                        item.supplierName,
+                        item.normalizedItemName,
+                        item.spec,
+                        item.priceBefore,
+                        item.priceAfter,
+                        item.effectiveDate))
+                .from(item)
+                .where(item.deletedAt.isNotNull())
+                .fetch();
     }
 }
