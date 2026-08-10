@@ -2,6 +2,7 @@ package com.bosalpim.compozi_ai.domain.inbox.dto.request;
 
 import com.bosalpim.compozi_ai.domain.document.component.parser.ValidItemSpecAndUnit;
 import com.bosalpim.compozi_ai.domain.document.component.validator.SpecAndUnitAware;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.Min;
 import java.time.LocalDate;
@@ -31,5 +32,6 @@ public class ItemUpdateRequestDto implements SpecAndUnitAware {
     Long priceAfter;
 
     @JsonProperty("effective_date")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     LocalDate effectiveDate;
 }
