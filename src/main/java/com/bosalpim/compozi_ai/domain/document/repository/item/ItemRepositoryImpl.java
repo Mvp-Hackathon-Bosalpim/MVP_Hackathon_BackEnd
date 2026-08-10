@@ -3,6 +3,7 @@ package com.bosalpim.compozi_ai.domain.document.repository.item;
 import static com.bosalpim.compozi_ai.domain.document.entity.QFile.file;
 import static com.bosalpim.compozi_ai.domain.document.entity.QItem.item;
 
+import com.bosalpim.compozi_ai.domain.dashboard.dto.StatusCountDto;
 import com.bosalpim.compozi_ai.domain.document.entity.Item;
 import com.bosalpim.compozi_ai.domain.document.enums.ReviewStatus;
 import com.bosalpim.compozi_ai.domain.inbox.dto.response.DeletedItemResponseDto;
@@ -16,6 +17,7 @@ import com.querydsl.core.types.dsl.NumberPath;
 import com.querydsl.core.types.dsl.StringPath;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -28,6 +30,23 @@ import org.springframework.data.domain.Pageable;
 public class ItemRepositoryImpl implements ItemQueryRepository {
 
     private final JPAQueryFactory queryFactory;
+
+    @Override
+    public List<StatusCountDto> countByReviewStatusForDashboard(LocalDateTime todayStart) {
+        return queryFactory
+                .select(Projections.constructor(StatusCountDto.class,
+                        item.reviewStatus,
+                        item.count(),
+                        new CaseBuilder()
+                                .when(item.createdAt.goe(todayStart)).then(1L)
+                                .otherwise(0L)
+                                .sum()
+                ))
+                .from(item)
+                .where(item.deletedAt.isNull())
+                .groupBy(item.reviewStatus)
+                .fetch();
+    }
 
     @Override
     public Page<Item> searchItems(List<String> itemNames, List<String> supplierNames, LocalDate startDate,
@@ -112,28 +131,6 @@ public class ItemRepositoryImpl implements ItemQueryRepository {
                 .leftJoin(item.file, file).fetchJoin()
                 .where(item.id.eq(id))
                 .fetchOne();
-        return Optional.ofNullable(result);
-    }
-
-    @Override
-    public Optional<Item> findDuplicateCandidate(Long excludeItemId, String supplierName, String normalizedItemName,
-                                                 String spec, String unit, Long priceBefore, Long priceAfter,
-                                                 LocalDate effectiveDate) {
-
-        Item result = queryFactory.selectFrom(item)
-                .where(
-                        item.deletedAt.isNull(),
-                        item.id.ne(excludeItemId),
-                        eqOrIsNull(item.supplierName, supplierName),
-                        eqOrIsNull(item.normalizedItemName, normalizedItemName),
-                        eqOrIsNull(item.spec, spec),
-                        eqOrIsNull(item.unit, unit),
-                        eqOrIsNull(item.priceBefore, priceBefore),
-                        eqOrIsNull(item.priceAfter, priceAfter),
-                        eqOrIsNull(item.effectiveDate, effectiveDate)
-                )
-                .fetchFirst();
-
         return Optional.ofNullable(result);
     }
 
