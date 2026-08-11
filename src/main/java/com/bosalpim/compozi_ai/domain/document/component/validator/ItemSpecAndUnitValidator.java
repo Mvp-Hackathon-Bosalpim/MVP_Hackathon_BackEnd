@@ -45,6 +45,10 @@ public class ItemSpecAndUnitValidator implements
         String spec = dto.getSpec();
         String unit = dto.getUnit();
 
+        if (spec == null || spec.isBlank() || unit == null || unit.isBlank()) {
+            return true;
+        }
+
         if (isSpecMismatch(spec)) {
             return false;
         }

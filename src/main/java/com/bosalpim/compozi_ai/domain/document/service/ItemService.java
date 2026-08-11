@@ -58,13 +58,17 @@ public class ItemService {
                     Set<ConstraintViolation<CreateCommonItemDocumentReqDto>> violations = validator.validate(dto);
                     boolean hasMissingField = !violations.isEmpty();
 
-                    if (dto.isHasParseError() || reviewStatus.equals(ReviewStatus.NEW) && hasMissingField) {
+                    boolean isDataLacking = dto.getNormalizedItemName() == null;
+
+                    if (dto.isHasParseError() || isDataLacking
+                            || (reviewStatus.equals(ReviewStatus.NEW)) && hasMissingField) {
                         reviewStatus = ReviewStatus.NEEDS_REVIEW;
                     }
 
                     Item item = Item.CreateCommonItem(dto, savedFile, group, reviewStatus);
 
-                    collectIssuesIfNeeded(item, dto.getSpec(), dto.getUnit(), issueCollector, hasMissingField);
+                    collectIssuesIfNeeded(item, dto.getSpec(), dto.getUnit(), issueCollector, hasMissingField,
+                            isDataLacking);
 
                     return item;
                 }
@@ -93,8 +97,9 @@ public class ItemService {
 
                     Set<ConstraintViolation<CreateManualItemDocumentReqDto>> violations = validator.validate(itemDto);
                     boolean hasMissingField = !violations.isEmpty();
+                    boolean isDataLacking = checkedDto.getNormalizedItemName() == null;
 
-                    if (reviewStatus.equals(ReviewStatus.NEW) && hasMissingField) {
+                    if (isDataLacking || (reviewStatus.equals(ReviewStatus.NEW)) && hasMissingField) {
                         reviewStatus = ReviewStatus.NEEDS_REVIEW;
                     }
 
@@ -106,7 +111,8 @@ public class ItemService {
                             reviewStatus
                     );
 
-                    collectIssuesIfNeeded(item, itemDto.getSpec(), itemDto.getUnit(), issueCollector, hasMissingField);
+                    collectIssuesIfNeeded(item, itemDto.getSpec(), itemDto.getUnit(), issueCollector, hasMissingField,
+                            isDataLacking);
 
                     return item;
                 }
@@ -121,14 +127,14 @@ public class ItemService {
     }
 
     public void collectIssuesIfNeeded(Item item, String spec, String unit, Consumer<Issue> issueCollector,
-                                      boolean hasMissingField) {
+                                      boolean hasMissingField, boolean isDataLacking) {
         if (itemSpecAndUnitValidator.isSpecMismatch(spec)) {
             issueCollector.accept(Issue.create(IssueType.SPEC_MISMATCH, "규격 불일치", false, item));
         }
         if (itemSpecAndUnitValidator.isUnitMismatch(unit)) {
             issueCollector.accept(Issue.create(IssueType.UNIT_MISMATCH, "단위 불일치", false, item));
         }
-        if (hasMissingField) {
+        if (hasMissingField || isDataLacking) {
             issueCollector.accept(Issue.create(IssueType.MISSING_REQUIRED, "필수값 누락", false, item));
         }
     }

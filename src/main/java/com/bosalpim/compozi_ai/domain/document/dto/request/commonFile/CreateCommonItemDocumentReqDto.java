@@ -12,8 +12,10 @@ import lombok.Setter;
 @Builder
 public class CreateCommonItemDocumentReqDto {
 
+    @NotBlank(message = "docId 가 누락되었습니다.")
     private String docId;
 
+    @NotBlank(message = "sourceType 이 누락되었습니다.")
     private String sourceType;
 
     private Long rowNo;
