@@ -30,7 +30,7 @@ public class ItemDocumentDuplicateValidator {
         Map<String, Item> existingDbMap = new HashMap<>();
         for (Item item : allExistingItems) {
             String key = generateKey(
-                    item.getSupplierName(), item.getNormalizedItemName(), item.getSpec(),
+                    item.getSupplierName(), getEffectiveItemName(item), item.getSpec(),
                     item.getUnit(), item.getPriceBefore(), item.getPriceAfter(), item.getEffectiveDate()
             );
             log.info("key1 ---------------------- {} ", key);
@@ -45,7 +45,7 @@ public class ItemDocumentDuplicateValidator {
 
             // 기존에는 저장 시 trim() 을 했지만 아래 코드는 저장 이전 상태이므로 trim() 이 따로 필요하다. -> unit 에만 적용
             String key = generateKey(
-                    dto.getSupplierName(), normalizedName, dto.getSpec(),
+                    dto.getSupplierName(), getEffectiveItemName(dto), dto.getSpec().trim(),
                     dto.getUnit().trim(), dto.getPriceBefore(), dto.getPriceAfter(), dto.getEffectiveDate()
             );
             log.info("key2 ---------------------- {}", key);
@@ -83,7 +83,7 @@ public class ItemDocumentDuplicateValidator {
         Map<String, Item> existingDbMap = new HashMap<>();
         for (Item item : allExistingItems) {
             String key = generateKey(
-                    item.getSupplierName(), item.getNormalizedItemName(), item.getSpec(),
+                    item.getSupplierName(), getEffectiveItemName(item), item.getSpec(),
                     item.getUnit(), item.getPriceBefore(), item.getPriceAfter(), item.getEffectiveDate()
             );
             existingDbMap.putIfAbsent(key, item);
@@ -93,8 +93,9 @@ public class ItemDocumentDuplicateValidator {
 
         for (CheckDuplicatedManualItemDto checkDto : checkDtos) {
             String key = generateKey(
-                    checkDto.getSupplierName(), checkDto.getNormalizedItemName(), checkDto.getSpec(),
-                    checkDto.getUnit(), checkDto.getPriceBefore(), checkDto.getPriceAfter(), checkDto.getEffectiveDate()
+                    checkDto.getSupplierName(), getEffectiveItemName(checkDto), checkDto.getSpec().trim(),
+                    checkDto.getUnit().trim(), checkDto.getPriceBefore(), checkDto.getPriceAfter(),
+                    checkDto.getEffectiveDate()
             );
 
             if (existingDbMap.containsKey(key) || firstSeenMap.containsKey(key)) {
@@ -123,6 +124,30 @@ public class ItemDocumentDuplicateValidator {
             }
         }
         return sb.toString();
+    }
+
+    // 기존 db 저장 데이터의 rawName
+    private String getEffectiveItemName(Item item) {
+        if ("데이터 부족".equals(item.getNormalizedItemName())) {
+            return item.getRawItemName();
+        }
+        return item.getNormalizedItemName();
+    }
+
+    // 파일 입력 데이터의 rawName
+    private String getEffectiveItemName(CreateCommonItemDocumentReqDto dto) {
+        if ("데이터 부족".equals(dto.getNormalizedItemName())) {
+            return dto.getRawItemName();
+        }
+        return dto.getNormalizedItemName();
+    }
+
+    // 수기 입력 데이터의 rawName
+    private String getEffectiveItemName(CheckDuplicatedManualItemDto dto) {
+        if ("데이터 부족".equals(dto.getNormalizedItemName())) {
+            return dto.getRawItemName();
+        }
+        return dto.getNormalizedItemName();
     }
 
     // --- [ 반환용 DTO/Record ] ---

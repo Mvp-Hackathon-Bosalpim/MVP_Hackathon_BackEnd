@@ -58,7 +58,10 @@ public class ItemService {
                     Set<ConstraintViolation<CreateCommonItemDocumentReqDto>> violations = validator.validate(dto);
                     boolean hasMissingField = !violations.isEmpty();
 
-                    if (dto.isHasParseError() || reviewStatus.equals(ReviewStatus.NEW) && hasMissingField) {
+                    boolean isDataLacking = "데이터 부족".equals(dto.getNormalizedItemName());
+
+                    if (dto.isHasParseError() || isDataLacking
+                            || (reviewStatus.equals(ReviewStatus.NEW)) && hasMissingField) {
                         reviewStatus = ReviewStatus.NEEDS_REVIEW;
                     }
 
@@ -93,8 +96,9 @@ public class ItemService {
 
                     Set<ConstraintViolation<CreateManualItemDocumentReqDto>> violations = validator.validate(itemDto);
                     boolean hasMissingField = !violations.isEmpty();
+                    boolean isDataLacking = "데이터 부족".equals(checkedDto.getNormalizedItemName());
 
-                    if (reviewStatus.equals(ReviewStatus.NEW) && hasMissingField) {
+                    if (isDataLacking || (reviewStatus.equals(ReviewStatus.NEW)) && hasMissingField) {
                         reviewStatus = ReviewStatus.NEEDS_REVIEW;
                     }
 

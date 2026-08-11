@@ -397,9 +397,10 @@ public class InboxService {
         boolean isDuplicate = (duplicatedTarget != null);
         handleDuplicatedGroup(item, duplicatedTarget, otherItems);
         boolean hasMissingField = !validator.validate(item).isEmpty();
+        boolean isDataLacking = "데이터 부족".equals(item.getNormalizedItemName());
         ReviewStatus reviewStatus = itemService.determineReviewStatus(item.getSpec(), item.getUnit(), isDuplicate);
 
-        if (reviewStatus.equals(ReviewStatus.NEW) && hasMissingField) {
+        if (isDataLacking || reviewStatus.equals(ReviewStatus.NEW) && hasMissingField) {
             reviewStatus = ReviewStatus.NEEDS_REVIEW;
         }
         item.updateReviewStatus(reviewStatus);
@@ -437,7 +438,19 @@ public class InboxService {
 
                 if (remainingItemsInGroup.size() == 1) {
                     Item lonelyItem = remainingItemsInGroup.get(0);
-                    lonelyItem.updateReviewStatus(ReviewStatus.NEW);
+                    boolean lonelyIsDataLacking = "데이터 부족".equals(lonelyItem.getNormalizedItemName());
+                    boolean lonelyHasMissingField = !validator.validate(lonelyItem).isEmpty();
+
+                    // 중복 해소 후 기본 ReviewStatus 계산 (isDuplicate = false)
+                    ReviewStatus lonelyStatus = itemService.determineReviewStatus(
+                            lonelyItem.getSpec(), lonelyItem.getUnit(), false);
+
+                    // 데이터 부족 또는 필수값 누락이 남아있다면 NEEDS_REVIEW 유지
+                    if (lonelyIsDataLacking || lonelyHasMissingField) {
+                        lonelyStatus = ReviewStatus.NEEDS_REVIEW;
+                    }
+
+                    lonelyItem.updateReviewStatus(lonelyStatus);
                     lonelyItem.updateDuplicatedGroup(null);
 
                     issueRepository.findByItemAndResolved(lonelyItem, false).stream()
