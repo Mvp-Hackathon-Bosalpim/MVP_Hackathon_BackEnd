@@ -10,6 +10,8 @@ import lombok.Setter;
 public class CheckDuplicatedManualItemDto {
     private String supplierName;
 
+    private String rawItemName;
+
     private String normalizedItemName;
 
     private String spec;
@@ -28,6 +30,7 @@ public class CheckDuplicatedManualItemDto {
     public static CheckDuplicatedManualItemDto create(CreateManualItemDocumentReqDto dto, String normalizedItemName) {
         return CheckDuplicatedManualItemDto.builder()
                 .supplierName(dto.getSupplierName())
+                .rawItemName(dto.getRawItemName())
                 .normalizedItemName(normalizedItemName)
                 .spec(dto.getSpec())
                 .unit(dto.getUnit())
