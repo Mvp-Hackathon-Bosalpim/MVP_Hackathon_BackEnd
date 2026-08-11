@@ -43,9 +43,10 @@ public class ItemDocumentDuplicateValidator {
             String normalizedName = itemNameMapper.map(dto.getRawItemName());
             dto.setNormalizedItemName(normalizedName);
 
+            // 기존에는 저장 시 trim() 을 했지만 아래 코드는 저장 이전 상태이므로 trim() 이 따로 필요하다. -> unit 에만 적용
             String key = generateKey(
                     dto.getSupplierName(), normalizedName, dto.getSpec(),
-                    dto.getUnit(), dto.getPriceBefore(), dto.getPriceAfter(), dto.getEffectiveDate()
+                    dto.getUnit().trim(), dto.getPriceBefore(), dto.getPriceAfter(), dto.getEffectiveDate()
             );
             log.info("key2 ---------------------- {}", key);
 
