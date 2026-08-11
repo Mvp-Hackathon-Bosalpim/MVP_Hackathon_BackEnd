@@ -16,7 +16,7 @@ public class ItemNameMapper {
     public String map(String rawName) {
 
         if (rawName == null || rawName.isBlank()) {
-            return "데이터 부족";
+            return null;
         }
 
         Optional<String> exactMatch = itemDictionary.findMappedName(rawName);
@@ -38,7 +38,7 @@ public class ItemNameMapper {
 //        }
 
         if (rawName.equals(normalized)) {
-            return "데이터 부족";
+            return null;
         }
 
         return normalized;

@@ -107,9 +107,9 @@ public class Item extends BaseTimeStampEntity {
                 .docId(reqDto.getDocId())
                 .sourceType(SourceType.from(reqDto.getSourceType()))
                 .rowNo(reqDto.getRowNo())
-                .supplierName(reqDto.getSupplierName())
+                .supplierName(reqDto.getSupplierName().trim())
                 .rawItemName(reqDto.getRawItemName().trim())
-                .normalizedItemName(reqDto.getNormalizedItemName())
+                .normalizedItemName(reqDto.getNormalizedItemName().trim())
                 .spec(reqDto.getSpec().trim())
                 .unit(reqDto.getUnit().trim())
                 .priceBefore(reqDto.getPriceBefore())
@@ -126,9 +126,9 @@ public class Item extends BaseTimeStampEntity {
                 .file(file)
                 .duplicatedGroup(group)
                 .sourceType(SourceType.MANUAL)
-                .supplierName(reqDto.getSupplierName())
+                .supplierName(reqDto.getSupplierName().trim())
                 .rawItemName(reqDto.getRawItemName().trim())
-                .normalizedItemName(normalizedItemName)
+                .normalizedItemName(trimSafely(normalizedItemName))
                 .spec(reqDto.getSpec().trim())
                 .unit(reqDto.getUnit().trim())
                 .priceBefore(reqDto.getPriceBefore())
@@ -156,13 +156,13 @@ public class Item extends BaseTimeStampEntity {
 
     public void updateItem(ItemUpdateRequestDto dto) {
         if (dto.getNormalizedItemName() != null) {
-            this.normalizedItemName = dto.getNormalizedItemName();
+            this.normalizedItemName = dto.getNormalizedItemName().trim();
         }
         if (dto.getSupplierName() != null) {
-            this.supplierName = dto.getSupplierName();
+            this.supplierName = dto.getSupplierName().trim();
         }
         if (dto.getSpec() != null) {
-            this.spec = dto.getSpec();
+            this.spec = dto.getSpec().trim();
         }
         if (dto.getUnit() != null) {
             this.unit = dto.getUnit().trim();
@@ -184,5 +184,9 @@ public class Item extends BaseTimeStampEntity {
 
     public void delete() {
         this.deletedAt = LocalDateTime.now();
+    }
+
+    private static String trimSafely(String value) {
+        return value == null ? null : value.trim();
     }
 }

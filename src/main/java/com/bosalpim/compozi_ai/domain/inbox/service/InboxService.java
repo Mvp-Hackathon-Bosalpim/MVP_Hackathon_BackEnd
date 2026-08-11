@@ -397,7 +397,7 @@ public class InboxService {
         boolean isDuplicate = (duplicatedTarget != null);
         handleDuplicatedGroup(item, duplicatedTarget, otherItems);
         boolean hasMissingField = !validator.validate(item).isEmpty();
-        boolean isDataLacking = "데이터 부족".equals(item.getNormalizedItemName());
+        boolean isDataLacking = item.getNormalizedItemName() == null;
         ReviewStatus reviewStatus = itemService.determineReviewStatus(item.getSpec(), item.getUnit(), isDuplicate);
 
         if (isDataLacking || reviewStatus.equals(ReviewStatus.NEW) && hasMissingField) {
@@ -438,7 +438,7 @@ public class InboxService {
 
                 if (remainingItemsInGroup.size() == 1) {
                     Item lonelyItem = remainingItemsInGroup.get(0);
-                    boolean lonelyIsDataLacking = "데이터 부족".equals(lonelyItem.getNormalizedItemName());
+                    boolean lonelyIsDataLacking = lonelyItem.getNormalizedItemName() == null;
                     boolean lonelyHasMissingField = !validator.validate(lonelyItem).isEmpty();
 
                     // 중복 해소 후 기본 ReviewStatus 계산 (isDuplicate = false)
@@ -490,7 +490,8 @@ public class InboxService {
                         newIssues.add(issue);
                     }
                 },
-                hasMissingField
+                hasMissingField,
+                item.getNormalizedItemName() == null || item.getNormalizedItemName().trim().isEmpty()
         );
 
         if (isDuplicate && hasNoActiveIssue(unresolvedIssues, IssueType.DUPLICATE_SUSPECTED)) {

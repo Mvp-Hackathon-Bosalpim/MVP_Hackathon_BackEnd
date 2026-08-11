@@ -33,7 +33,6 @@ public class ItemDocumentDuplicateValidator {
                     item.getSupplierName(), getEffectiveItemName(item), item.getSpec(),
                     item.getUnit(), item.getPriceBefore(), item.getPriceAfter(), item.getEffectiveDate()
             );
-            log.info("key1 ---------------------- {} ", key);
             existingDbMap.putIfAbsent(key, item); // ID가 가장 작은 원본 1개만 유지
         }
 
@@ -48,7 +47,6 @@ public class ItemDocumentDuplicateValidator {
                     dto.getSupplierName(), getEffectiveItemName(dto), dto.getSpec().trim(),
                     dto.getUnit().trim(), dto.getPriceBefore(), dto.getPriceAfter(), dto.getEffectiveDate()
             );
-            log.info("key2 ---------------------- {}", key);
 
             // DB에 존재하거나 요청 목록 내에서 이미 등장했으면 Duplicate Group Key 부여
             if (existingDbMap.containsKey(key) || firstSeenMap.containsKey(key)) {
@@ -128,7 +126,7 @@ public class ItemDocumentDuplicateValidator {
 
     // 기존 db 저장 데이터의 rawName
     private String getEffectiveItemName(Item item) {
-        if ("데이터 부족".equals(item.getNormalizedItemName())) {
+        if (item.getNormalizedItemName() == null) {
             return item.getRawItemName();
         }
         return item.getNormalizedItemName();
@@ -136,7 +134,7 @@ public class ItemDocumentDuplicateValidator {
 
     // 파일 입력 데이터의 rawName
     private String getEffectiveItemName(CreateCommonItemDocumentReqDto dto) {
-        if ("데이터 부족".equals(dto.getNormalizedItemName())) {
+        if (dto.getNormalizedItemName() == null) {
             return dto.getRawItemName();
         }
         return dto.getNormalizedItemName();
@@ -144,7 +142,7 @@ public class ItemDocumentDuplicateValidator {
 
     // 수기 입력 데이터의 rawName
     private String getEffectiveItemName(CheckDuplicatedManualItemDto dto) {
-        if ("데이터 부족".equals(dto.getNormalizedItemName())) {
+        if (dto.getNormalizedItemName() == null) {
             return dto.getRawItemName();
         }
         return dto.getNormalizedItemName();
