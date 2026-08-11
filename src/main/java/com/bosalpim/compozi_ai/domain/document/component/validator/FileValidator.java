@@ -17,7 +17,8 @@ public class FileValidator {
         // 2. 확장자 검증
         String originalFilename = file.getOriginalFilename();
         if (originalFilename == null ||
-                (!originalFilename.endsWith(".xlsx") && !originalFilename.endsWith(".csv"))) {
+                (!originalFilename.endsWith(".xlsx") && !originalFilename.endsWith(".csv"))
+                        && !originalFilename.endsWith(".png") && !originalFilename.endsWith(".pdf")) {
             throw new CustomException(BadStatusCode.UNSUPPORTED_FILE_TYPE);
         }
     }
