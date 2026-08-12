@@ -70,7 +70,7 @@ public class ExportService {
             throw new CustomException(BadStatusCode.EXPORT_S3_KEY_NOT_FOUND);
         }
 
-        return s3Service.generatePresignedUrl(history.getS3Key(), Duration.ofMinutes(10));
+        return s3Service.generatePresignedUrl(history.getS3Key(), Duration.ofDays(7));
     }
 
     private void validateRequest(ExportRequestDto request) {
