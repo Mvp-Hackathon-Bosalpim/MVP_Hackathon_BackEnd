@@ -41,6 +41,9 @@ public class DashboardSummaryResponseDto {
     @AllArgsConstructor
     @Schema(description = "최근 내보내기 이력 항목")
     public static class RecentExportDto {
+        @Schema(description = "내보내기 이력 ID", example = "123")
+        private final Long id;
+
         @Schema(description = "파일명", example = "qwertyuiopasdf.json")
         private final String fileName;
 
@@ -58,6 +61,7 @@ public class DashboardSummaryResponseDto {
 
         public static RecentExportDto from(ExportHistory history) {
             return new RecentExportDto(
+                    history.getId(),
                     history.getFileName(),
                     history.getFormat().name(),
                     history.getExportedAt().toString(),
