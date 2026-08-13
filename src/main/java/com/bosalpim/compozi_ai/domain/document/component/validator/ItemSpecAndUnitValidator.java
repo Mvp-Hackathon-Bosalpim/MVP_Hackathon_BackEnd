@@ -15,7 +15,7 @@ public class ItemSpecAndUnitValidator implements
             Pattern.compile("^\\s*기존\\s*(?<old>.+?)\\s*/\\s*변경\\s*(?<new>.+?)\\s*$");
 
     // 표준 단위 집합
-    private static final Set<String> ALLOWED_UNITS = Set.of("PK", "BOX", "EA", "PO");
+    private static final Set<String> ALLOWED_UNITS = Set.of("PK", "BOX", "EA", "PO", "봉", "망", "말", "팩", "캔", "박스");
 
     public boolean isSpecMismatch(String spec) {
         if (spec == null || spec.isBlank()) {

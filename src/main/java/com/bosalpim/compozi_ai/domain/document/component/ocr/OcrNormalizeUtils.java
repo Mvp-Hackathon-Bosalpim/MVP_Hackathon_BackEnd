@@ -1,4 +1,4 @@
-package com.bosalpim.compozi_ai.domain.document.component.parser;
+package com.bosalpim.compozi_ai.domain.document.component.ocr;
 
 public class OcrNormalizeUtils {
 
