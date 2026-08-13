@@ -37,7 +37,6 @@ public class FileService {
 
         File savedFile = fileRepository.save(File.createFile(filename, InputMethod.FILE)); // 파일 정보 저장
 
-        // TODO : OCR 입력 시 관리자 한번 체크 가능하도록 => 여건 되면
         List<Item> items = itemService.createCommonItem(parser.parse(file), savedFile);
         return CreateItemDocumentResDto.from(items);
 
