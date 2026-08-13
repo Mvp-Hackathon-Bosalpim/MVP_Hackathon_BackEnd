@@ -24,6 +24,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -87,7 +88,8 @@ public class Item extends BaseTimeStampEntity {
     @PrePersist
     private void prePersist() {
         if (this.docId == null) {
-            this.docId = "TEMP";
+            this.docId = "TEMP-" + UUID.randomUUID().toString().substring(0, 8);
+            // 디폴트 docId unique 중복 방지
         }
     }
 
