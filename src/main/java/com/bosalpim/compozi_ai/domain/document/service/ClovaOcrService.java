@@ -1,10 +1,10 @@
 package com.bosalpim.compozi_ai.domain.document.service;
 
+import com.bosalpim.compozi_ai.domain.document.component.ocr.OcrLineExtractor;
 import com.bosalpim.compozi_ai.domain.document.dto.response.ClovaOcrGeneralResponseDto;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Base64;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -26,11 +26,11 @@ public class ClovaOcrService {
 
     private final RestClient restClient;
 
-    public ClovaOcrService() {
+    public ClovaOcrService(OcrLineExtractor ocrLineExtractor) {
         this.restClient = RestClient.create();
     }
 
-    public List<List<String>> processGeneralOcrToGrid(MultipartFile file) throws IOException {
+    public List<String> processGeneralOcrToGrid(MultipartFile file) throws IOException {
         String base64Data = Base64.getEncoder().encodeToString(file.getBytes());
 
         Map<String, Object> messageJson = Map.of(
@@ -52,16 +52,29 @@ public class ClovaOcrService {
                 .retrieve()
                 .body(ClovaOcrGeneralResponseDto.class);
 
-        if (response == null || response.images() == null || response.images().isEmpty()) {
-            return Collections.emptyList();
+        if (response != null && response.images() != null && !response.images().isEmpty()) {
+            List<ClovaOcrGeneralResponseDto.Field> fields = response.images().get(0).fields();
+
+            List<String> extractedLines = OcrLineExtractor.extractLines(fields);
+
+            System.out.println("=== Clova General OCR Extracted Lines ===");
+            extractedLines.forEach(System.out::println);
+
+            return extractedLines;
         }
 
-        List<ClovaOcrGeneralResponseDto.Field> fields = response.images().get(0).fields();
-        if (fields == null || fields.isEmpty()) {
-            return Collections.emptyList();
-        }
+//        if (response == null || response.images() == null || response.images().isEmpty()) {
+//            return Collections.emptyList();
+//        }
+//
+//        List<ClovaOcrGeneralResponseDto.Field> fields = response.images().get(0).fields();
+//        if (fields == null || fields.isEmpty()) {
+//            return Collections.emptyList();
+//        }
+//
+//        return convertFieldsToGrid(fields);
 
-        return convertFieldsToGrid(fields);
+        return null;
     }
 
     private List<List<String>> convertFieldsToGrid(List<ClovaOcrGeneralResponseDto.Field> fields) {

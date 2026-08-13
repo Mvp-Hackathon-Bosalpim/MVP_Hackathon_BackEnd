@@ -3,19 +3,42 @@ package com.bosalpim.compozi_ai.domain.document.dto.response;
 import java.util.List;
 
 public record ClovaOcrGeneralResponseDto(
-        List<ImageResult> images
+        String version,
+        String requestId,
+        long timestamp,
+        List<Image> images
 ) {
-    public record ImageResult(
+    public record Image(
             String uid,
             String name,
             String inferResult,
+            String message,
+            ValidationResult validationResult,
+            ConvertedImageInfo convertedImageInfo,
             List<Field> fields
     ) {
     }
 
+    public record ValidationResult(
+            String result
+    ) {
+    }
+
+    public record ConvertedImageInfo(
+            int width,
+            int height,
+            int pageIndex,
+            boolean longImage
+    ) {
+    }
+
     public record Field(
+            String valueType,
+            BoundingPoly boundingPoly,
             String inferText,
-            BoundingPoly boundingPoly
+            double inferConfidence,
+            String type,
+            Boolean lineBreak
     ) {
     }
 
@@ -25,8 +48,8 @@ public record ClovaOcrGeneralResponseDto(
     }
 
     public record Vertex(
-            double x,
-            double y
+            Double x,
+            Double y
     ) {
     }
 }

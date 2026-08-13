@@ -9,6 +9,7 @@ import com.bosalpim.compozi_ai.domain.document.enums.InputMethod;
 import com.bosalpim.compozi_ai.domain.document.repository.FileRepository;
 import com.bosalpim.compozi_ai.general.enums.BadStatusCode;
 import com.bosalpim.compozi_ai.general.exception.CustomException;
+import java.io.IOException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,7 +26,7 @@ public class FileService {
 
 
     @Transactional
-    public CreateItemDocumentResDto createCommonFile(MultipartFile file) {
+    public CreateItemDocumentResDto createCommonFile(MultipartFile file) throws IOException {
         String filename = file.getOriginalFilename(); // 파일 이름 추출
 
         FileParser parser = fileParsers.stream()
@@ -36,6 +37,7 @@ public class FileService {
 
         File savedFile = fileRepository.save(File.createFile(filename, InputMethod.FILE)); // 파일 정보 저장
 
+        // TODO : OCR 입력 시 관리자 한번 체크 가능하도록 => 여건 되면
         List<Item> items = itemService.createCommonItem(parser.parse(file), savedFile);
         return CreateItemDocumentResDto.from(items);
 
