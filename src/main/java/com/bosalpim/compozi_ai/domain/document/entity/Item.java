@@ -109,7 +109,7 @@ public class Item extends BaseTimeStampEntity {
                 .rowNo(reqDto.getRowNo())
                 .supplierName(reqDto.getSupplierName().trim())
                 .rawItemName(reqDto.getRawItemName().trim())
-                .normalizedItemName(reqDto.getNormalizedItemName().trim())
+                .normalizedItemName(reqDto.getNormalizedItemName())
                 .spec(reqDto.getSpec().trim())
                 .unit(reqDto.getUnit().trim())
                 .priceBefore(reqDto.getPriceBefore())

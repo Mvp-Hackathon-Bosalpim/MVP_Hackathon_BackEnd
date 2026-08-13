@@ -9,6 +9,7 @@ import com.bosalpim.compozi_ai.domain.document.enums.InputMethod;
 import com.bosalpim.compozi_ai.domain.document.repository.FileRepository;
 import com.bosalpim.compozi_ai.general.enums.BadStatusCode;
 import com.bosalpim.compozi_ai.general.exception.CustomException;
+import java.io.IOException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,7 +26,7 @@ public class FileService {
 
 
     @Transactional
-    public CreateItemDocumentResDto createCommonFile(MultipartFile file) {
+    public CreateItemDocumentResDto createCommonFile(MultipartFile file) throws IOException {
         String filename = file.getOriginalFilename(); // 파일 이름 추출
 
         FileParser parser = fileParsers.stream()
