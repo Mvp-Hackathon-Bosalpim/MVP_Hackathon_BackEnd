@@ -95,7 +95,7 @@ public class Item extends BaseTimeStampEntity {
 
     @PostPersist
     private void generateDocId() {
-        if (this.docId.equals("TEMP")) {
+        if (this.docId.startsWith("TEMP")) {
             this.docId = String.format("M-%03d", this.id);
         }
     }

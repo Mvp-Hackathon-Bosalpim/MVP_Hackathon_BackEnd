@@ -75,7 +75,7 @@ public class FileController {
 
     // OCR 데이터 전송
     @PostMapping("/confirm/ocr")
-    @Operation(summary = "OCR 결과 승인", description = "파싱된 파일을 db 에 저장한다.")
+    @Operation(summary = "OCR 결과 승인", description = "파싱된 OCR 파일을 db 에 저장한다.")
     @ApiSuccess(statusCode = HttpStatus.OK, message = "OCR 파싱이 완료되었습니다.")
     @ApiResponse(responseCode = "400", description = "필수 입력 값이 누락된 경우")
     public CreateItemDocumentResDto confirmOcrItems(
