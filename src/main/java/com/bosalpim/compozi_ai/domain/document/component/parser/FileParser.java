@@ -9,5 +9,10 @@ public interface FileParser {
 
     boolean supports(String filename);
 
+
     List<CreateCommonItemDocumentReqDto> parse(MultipartFile file) throws IOException;
+
+    default boolean isOcrParser() {
+        return false;
+    }
 }

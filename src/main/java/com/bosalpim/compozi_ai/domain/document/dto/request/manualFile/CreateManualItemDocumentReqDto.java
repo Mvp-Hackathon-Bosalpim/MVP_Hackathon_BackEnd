@@ -42,12 +42,10 @@ public class CreateManualItemDocumentReqDto implements SpecAndUnitAware {
     private Long priceBefore;
 
     @JsonProperty("price_after")
-    @NotNull(message = "변경 후 단가가 누락되었습니다.")
     @Min(value = 0, message = "변경 후 가격은 0원 이상이어야 합니다.")
     private Long priceAfter;
 
     @JsonProperty("effective_date")
-    @NotNull(message = "적용일이 누락되었습니다.")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate effectiveDate;
 
