@@ -33,6 +33,11 @@ public class OcrFileParserRouter implements FileParser {
     }
 
     @Override
+    public boolean isOcrParser() {
+        return true;
+    }
+
+    @Override
     public List<CreateCommonItemDocumentReqDto> parse(MultipartFile file) throws IOException {
         // 1. 공통 OCR 호출 (1회만 수행)
         List<String> ocrLines = ocrService.processGeneralOcrToGrid(file);

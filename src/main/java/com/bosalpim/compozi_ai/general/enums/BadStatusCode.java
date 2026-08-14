@@ -26,6 +26,7 @@ public enum BadStatusCode {
     NO_ITEM_CONTENT(HttpStatus.BAD_REQUEST, "조건에 맞는 item 이 없습니다."),
     ITEM_CANNOT_REMOVE(HttpStatus.BAD_REQUEST, "이미 처리 (승인, 반려, 삭제) 되거나 없는 값이 있어 삭제 할 수 없습니다."),
     ITEM_CANNOT_UPDATE(HttpStatus.BAD_REQUEST, "이미 처리 (승인, 반려, 삭제) 되거나 해당 하는 값이 없어 수정이 불가능합니다."),
+    INVALID_FILE_PARSER_REQUEST(HttpStatus.BAD_REQUEST, "해당 파서로는 해당 파일을 파싱 할 수 없습니다."),
     //401 UNAUTHORIZED
 
     //403 FORBIDDEN
