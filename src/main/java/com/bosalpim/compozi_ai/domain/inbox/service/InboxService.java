@@ -40,12 +40,14 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class InboxService {
     private final ItemRepository itemRepository;
@@ -68,13 +70,30 @@ public class InboxService {
                 .map(DeletedItemResponseDto::getId)
                 .toList();
 
-        Map<Long, String> memoByItemId = changeLogRepository.findAllByItemIdIn(itemIds).stream()
+        log.info("=== getDeletedItems 디버그 시작 ===");
+        log.info("삭제된 Item 개수: {}", deletedItems.size());
+        log.info("Item IDs: {}", itemIds);
+
+        List<ChangeLog> changeLogs = changeLogRepository.findAllByItemIdIn(itemIds);
+        log.info("조회된 ChangeLog 개수: {}", changeLogs.size());
+
+        // ✅ 각 ChangeLog 검사
+        changeLogs.forEach(cl -> {
+            log.info("ChangeLog ID: {}, Item: {}, Memo: {}, Action: {}",
+                    cl.getId(),
+                    cl.getItem() != null ? cl.getItem().getId() : "NULL",
+                    cl.getMemo() != null ? cl.getMemo() : "NULL",
+                    cl.getAction());
+        });
+
+        Map<Long, String> memoByItemId = changeLogs.stream()
                 .collect(Collectors.toMap(cl -> cl.getItem().getId(), ChangeLog::getMemo));
+
+        log.info("Memo Map 생성 완료: {}", memoByItemId);
 
         return deletedItems.stream()
                 .map(dto -> dto.toBuilder().memo(memoByItemId.get(dto.getId())).build())
                 .toList();
-
     }
 
     @Transactional
