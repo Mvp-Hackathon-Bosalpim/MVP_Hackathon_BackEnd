@@ -70,29 +70,14 @@ public class InboxService {
                 .map(DeletedItemResponseDto::getId)
                 .toList();
 
-        log.info("=== getDeletedItems 디버그 시작 ===");
-        log.info("삭제된 Item 개수: {}", deletedItems.size());
-        log.info("Item IDs: {}", itemIds);
-
-        List<ChangeLog> changeLogs = changeLogRepository.findAllByItemIdIn(itemIds);
-        log.info("조회된 ChangeLog 개수: {}", changeLogs.size());
-
-        // ✅ 각 ChangeLog 검사
-        changeLogs.forEach(cl -> {
-            log.info("ChangeLog ID: {}, Item: {}, Memo: {}, Action: {}",
-                    cl.getId(),
-                    cl.getItem() != null ? cl.getItem().getId() : "NULL",
-                    cl.getMemo() != null ? cl.getMemo() : "NULL",
-                    cl.getAction());
-        });
-
-        Map<Long, String> memoByItemId = changeLogs.stream()
-                .collect(Collectors.toMap(cl -> cl.getItem().getId(), ChangeLog::getMemo));
-
-        log.info("Memo Map 생성 완료: {}", memoByItemId);
+        Map<Long, String> memoByItemId = changeLogRepository.findByItemIdInAndAction(itemIds, Action.DELETE).stream()
+                .collect(Collectors.toMap(
+                        cl -> cl.getItem().getId(),
+                        cl -> cl.getMemo() != null ? cl.getMemo() : ""
+                ));
 
         return deletedItems.stream()
-                .map(dto -> dto.toBuilder().memo(memoByItemId.get(dto.getId())).build())
+                .map(dto -> dto.toBuilder().memo(memoByItemId.getOrDefault(dto.getId(), "")).build())
                 .toList();
     }
 
