@@ -47,13 +47,13 @@
 
 ### 기본 정보
 
-| 필드                     | 타입     | 설명        | 비고                                 |
-|------------------------|--------|-----------|------------------------------------|
-| `doc_id`               | String | 원본 증빙 식별자 | 형식: `DOC-###`                      |
-| `source_type`          | String | 원본 증빙 유형  | `PDF` \| `XLSX` \| `IMAGE` \| `수기` |
-| `supplier_name`        | String | 공급사명      | 입력값 그대로                            |
-| `raw_item_name`        | String | 원문 품목명    | 공급사가 쓴 표기 그대로 (공백·약어 포함)           |
-| `normalized_item_name` | String | 정규화 품목명   | 시스템이 산출하여 정규화 된 값                  |
+| 필드                     | 타입     | 설명        | 비고                                                          |
+|------------------------|--------|-----------|-------------------------------------------------------------|
+| `doc_id`               | String | 원본 증빙 식별자 | 형식: `DOC-###`                                               |
+| `source_type`          | String | 원본 증빙 유형  | `PDF` \| `XLSX` \| `IMAGE` \| `MANUAL` \| `CSV`\| `UNKNOWN` |
+| `supplier_name`        | String | 공급사명      | 입력값 그대로                                                     |
+| `raw_item_name`        | String | 원문 품목명    | 공급사가 쓴 표기 그대로 (공백·약어 포함)                                    |
+| `normalized_item_name` | String | 정규화 품목명   | 시스템이 산출하여 정규화 된 값                                           |
 
 ### 규격·단위·가격
 
@@ -63,7 +63,7 @@
 | `unit`           | String        | 단위          | `PK` \| `BOX` \| `EA` \| `PO`       |
 | `price_before`   | Integer       | 인상 전 단가 (원) | `32000`                             |
 | `price_after`    | Integer       | 인상 후 단가 (원) | `33600`                             |
-| `effective_date` | String (Date) | 가격 적용일      | 형식: `YYYY-MM-DD`                    |
+| `effective_date` | String (Date) | 적용일         | 형식: `YYYY-MM-DD`                    |
 
 ### 검수 상태 및 예외
 
