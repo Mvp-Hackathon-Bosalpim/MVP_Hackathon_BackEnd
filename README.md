@@ -1,3 +1,15 @@
+# 0. 목차
+
+1. [프로젝트 개요](#1-프로젝트-개요)
+2. [정규화 품목명 구현 방식](#2-정규화-품목명-구현-방식)
+3. [출력 데이터 스키마](#3-출력-데이터-스키마)
+4. [예외 판정 규칙](#4-예외-판정-규칙)
+5. [OCR 구현 현황](#5-ocr-구현-현황)
+6. [구현하지 못한 부분 & 알려진 오류](#6-구현하지-못한-부분--알려진-오류)
+7. [소스 코드 정보 및 실행 방법](#7-소스-코드-정보)
+
+---
+
 # 1. 프로젝트 개요
 
 ---
@@ -289,6 +301,205 @@ ex)
 
 ## 7-1. 주요 디렉토리 구조
 
+```
+compozi-ai/
+├── src/main/java/com/bosalpim/compozi_ai/
+│   ├── CompoziAiApplication.java          # Spring Boot 진입점
+│   ├── config/                            # Spring 설정 (Swagger, S3, JPA, 비동기 등)
+│   ├── domain/
+│   │   ├── document/                      # 증빙 수집·파싱·정규화 (핵심)
+│   │   │   ├── controller/                # FileController — 파일/수기/OCR 입력 API
+│   │   │   ├── service/                   # FileService, ItemService
+│   │   │   ├── entity/                    # File, Item
+│   │   │   ├── repository/                # JPA·QueryDSL 저장소
+│   │   │   ├── component/
+│   │   │   │   ├── parser/                # CSV·Excel·OCR 파서
+│   │   │   │   ├── mapper/                # ItemNameMapper, 정규화 규칙·사전
+│   │   │   │   ├── validator/             # 중복·규격·단위 검증
+│   │   │   │   └── ocr/                   # Naver Clova OCR 연동
+│   │   │   └── dto/                       # 요청·응답 DTO
+│   │   ├── inbox/                         # 검수·트리아지
+│   │   │   ├── controller/                # ItemInboxController
+│   │   │   ├── service/                   # InboxService
+│   │   │   ├── entity/                    # Issue, ChangeLog, DuplicatedGroup
+│   │   │   └── repository/                # 이슈·변경이력·중복그룹 저장소
+│   │   ├── export/                        # 승인 데이터 내보내기
+│   │   │   ├── controller/                # ExportController
+│   │   │   ├── service/                   # ExportService
+│   │   │   ├── s3/                        # S3 업로드·Presigned URL
+│   │   │   └── entity/                    # ExportHistory
+│   │   └── dashboard/                     # 대시보드 집계
+│   │       ├── controller/                # DashboardController
+│   │       └── service/                   # DashboardService
+│   └── general/                           # 공통 응답 래핑·예외 처리
+│       ├── advice/                        # ApiResponseAdvice, GlobalExceptionHandler
+│       ├── response/                      # ApiResponse, PageResponseDto
+│       ├── exception/                     # CustomException 등
+│       └── enums/                         # BadStatusCode
+├── src/main/resources/
+│   ├── dictionary/item-dictionary.json    # 창업팀 제공 품목명 정규화 사전
+│   └── messages.properties                # 에러 메시지
+├── src/test/                              # 단위·통합 테스트
+├── compose.yml                            # 로컬 MySQL 컨테이너
+├── Dockerfile                             # 배포용 JAR 이미지
+├── build.gradle                           # Gradle 빌드 설정 (Java 17, Spring Boot 3.5)
+└── .github/workflows/CI-CD.yml            # main 머지 시 빌드·배포 파이프라인
+```
+
+---
+
 ## 7-2. 핵심 모듈 설명
 
+### domain/document — 구매 증빙 자료 수집 및 분석
+
+구매 아이템 정보를 수집하고 품목명을 정규화한 뒤 DB에 저장하는 핵심 모듈입니다.
+
+| 구성 요소                               | 역할                                                                                         |
+|-------------------------------------|--------------------------------------------------------------------------------------------|
+| `FileController`                    | 파일 업로드(`POST /api/v1/document`), 수기 입력(`POST /api/v1/manual-document`), OCR 미리보기·확정 API 제공 |
+| `FileService`                       | 확장자에 맞는 `FileParser` 선택 → `File` 메타 저장 → `ItemService`로 품목 생성                              |
+| `ItemService`                       | 파싱 결과를 `Item` 엔티티로 변환, 중복·규격·단위·필수값 예외 탐지 및 `Issue` 생성                                     |
+| `CsvParser` / `ExcelFileParser`     | CSV·XLSX 행 파싱 (Apache POI, OpenCSV)                                                        |
+| `OcrType1Parser` / `OcrType2Parser` | Naver Clova OCR 결과에서 표 형식별 데이터 추출                                                          |
+| `ItemNameMapper`                    | 사전 완전 일치 → 규칙 체인(약어 전개·단위 제거·띄어쓰기) 순으로 정규화. 미변경 시 `null`(→ `데이터 부족`)                       |
+| `ItemDocumentDuplicateValidator`    | 7개 필드 기반 중복 키 생성·탐지                                                                        |
+| `ItemSpecAndUnitValidator`          | 규격·단위 불일치 탐지                                                                               |
+
+**입력 흐름 요약**
+
+```
+파일 업로드 → FileValidator → FileParser.parse()
+  → ItemNameMapper.map() (정규화)
+  → 중복·규격·단위·필수값 검증
+  → Item + Issue 저장
+```
+
+---
+
+### domain/inbox — 검수 도메인
+
+검수자가 품목을 조회·수정·승인·반려하는 모듈입니다.
+
+| 구성 요소                 | 역할                                                                                    |
+|-----------------------|---------------------------------------------------------------------------------------|
+| `ItemInboxController` | 목록 조회, 상세 조회, 승인/반려(단건·일괄), 수정, 삭제, 중복 그룹 조회 API                                      |
+| `InboxService`        | 검수 상태(`ReviewStatus`) 전이, `ChangeLog` 기록, 미해결 `Issue` 검사 후 승인 차단                      |
+| `Issue`               | `missing_required`, `spec_mismatch`, `unit_mismatch`, `duplicate_suspected` 4가지 예외 유형 |
+| `ChangeLog`           | 필드 수정·승인·반려·삭제 등 검수 이력 저장                                                             |
+| `DuplicatedGroup`     | 중복 의심 품목을 그룹으로 묶어 함께 검토                                                               |
+
+---
+
+### domain/export — 승인 데이터 내보내기
+
+승인(`approved`)된 품목을 JSON 또는 CSV로 변환해 S3에 저장하고 다운로드 URL을 제공합니다.
+
+| 구성 요소              | 역할                                                            |
+|--------------------|---------------------------------------------------------------|
+| `ExportController` | 내보내기 요청(`POST /api/v1/exports`), 이력 조회, Presigned 다운로드 URL 발급 |
+| `ExportService`    | 승인 품목 조회 → JSON/CSV 직렬화 → S3 업로드 → `ExportHistory` 기록         |
+| `S3Service`        | AWS S3 파일 업로드 및 Presigned URL 생성                              |
+
+---
+
+### domain/dashboard — 대시보드
+
+검수 현황과 이슈 통계를 집계합니다.
+
+| 구성 요소                 | 역할                                                                   |
+|-----------------------|----------------------------------------------------------------------|
+| `DashboardController` | `GET /api/v1/dashboard/summary`, `GET /api/v1/dashboard/issue-stats` |
+| `DashboardService`    | 상태별 건수, 이슈 유형별 건수 집계                                                 |
+
+---
+
+### general — 공통 인프라
+
+| 구성 요소                    | 역할                                                                       |
+|--------------------------|--------------------------------------------------------------------------|
+| `ApiResponseAdvice`      | `@ApiSuccess` 어노테이션이 붙은 응답을 `{ status, code, message, data }` 형식으로 자동 래핑 |
+| `GlobalExceptionHandler` | `CustomException` + `BadStatusCode` 기반 통일 에러 응답                          |
+| `BadStatusCode`          | HTTP 상태·에러 코드·메시지 정의                                                     |
+
+---
+
 ## 7-3. 실행 방법
+
+### 7-3-1. 접속 주소 및 실행 방법
+
+https://mvp-hackathon-front-end.vercel.app/
+
+* 따로 인증/인가 는 구현하지 않았기 때문에 바로 접속하여 사용이 가능합니다.
+* 실행 방법은 첨부된 ppt 파일을 참고 하시면 됩니다.
+
+---
+
+### 7-3-2. 로컬 환경 설정
+
+#### 사전 요구사항
+
+| 항목     | 버전             | 참고 파일                                                  |
+|--------|----------------|--------------------------------------------------------|
+| Java   | 17             | `build.gradle` (`java.toolchain.languageVersion = 17`) |
+| Docker | MySQL 컨테이너 실행용 | `compose.yml`                                          |
+| Gradle | Wrapper 포함     | `gradlew`, `gradlew.bat`                               |
+
+#### 1) MySQL 실행
+
+프로젝트 루트의 `compose.yml`로 로컬 DB를 기동합니다.
+
+```bash
+docker compose -f compose.yml up -d
+```
+
+`compose.yml` 기준 접속 정보:
+
+| 항목         | 값                        |
+|------------|--------------------------|
+| 컨테이너명      | `mvp-local-db-container` |
+| 호스트 / 포트   | `127.0.0.1:3306`         |
+| DB명        | `local-db`               |
+| 사용자 / 비밀번호 | `mvp` / `1234`           |
+| root 비밀번호  | `1234`                   |
+
+#### 2) application.yml 설정
+
+`src/main/resources/application.yml`은 `.gitignore`에 포함되어 저장소에 없습니다.  
+로컬에서 직접 생성한 뒤, DB·OCR·S3 등 환경 변수를 설정합니다.
+
+#### 3) 빌드 및 실행
+
+```bash
+# 전체 빌드 (테스트 포함)
+./gradlew build
+
+# 애플리케이션 실행
+./gradlew bootRun
+
+# JAR 빌드 후 실행
+./gradlew bootJar -x test
+java -jar build/libs/compozi-ai-0.0.1-SNAPSHOT.jar
+```
+
+> `settings.gradle`의 `rootProject.name`(`compozi-ai`)과 `build.gradle`의 `version`(`0.0.1-SNAPSHOT`) 기준 JAR 파일명입니다.
+
+#### 4) API 확인
+
+| 항목            | URL                                     |
+|---------------|-----------------------------------------|
+| Swagger UI    | `http://localhost:8080/swagger-ui.html` |
+| API Base Path | `/api/v1`                               |
+
+#### 5) 테스트 실행
+
+```bash
+./gradlew test
+```
+
+---
+
+
+
+
+
+
